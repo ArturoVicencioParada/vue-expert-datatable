@@ -61,8 +61,8 @@ export default defineConfig([
             'vue/max-len': [
                 'error',
                 {
-                    'code': 120,
-                    'template': 120,
+                    'code': 150,
+                    'template': 150,
                     'tabWidth': 4,
                     'ignoreUrls': true,
                     'ignoreStrings': true,
@@ -72,7 +72,7 @@ export default defineConfig([
             'max-len': [
                 'error',
                 { 
-                    'code': 120,
+                    'code': 150,
                     'ignoreUrls': true,
                     'ignoreStrings': true,
                     'ignoreTemplateLiterals': true,
@@ -116,7 +116,8 @@ export default defineConfig([
                     'before': true,
                     'after': true
                 }
-            ]
+            ],
+            '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }]
         }
     },
     {
@@ -171,7 +172,8 @@ export default defineConfig([
                     'before': true,
                     'after': true
                 }
-            ]
+            ],
+            '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }]
         }
     }
 ]);

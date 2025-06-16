@@ -1,10 +1,10 @@
 import { AxiosInstance } from 'axios';
-import Field from './field';
+import Field, { BaseEntity } from './field';
 import Language from './language';
 import Method from './method';
 
 
-export default interface Data<T = Record<string, unknown>> {
+export default interface Data<T = BaseEntity> {
     base_url_testing: string;
     add_method?: Method;
     update_method?: Method;

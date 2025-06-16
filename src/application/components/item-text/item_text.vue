@@ -5,9 +5,9 @@
     </span>
 </template>
 
-<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
+<script setup lang="ts" generic="ItemGenericType = BaseEntity">
 import { computed } from 'vue'
-import type { Field, SelectOption } from '@/application/interface/field'
+import type { BaseEntity, Field, SelectOption } from '@/application/interface/field'
 
 interface ItemTextProps {
     field: Field<ItemGenericType>;
@@ -58,14 +58,14 @@ const fieldSelectSelected = computed(() => {
                     && selectData.itemValue
                     && selectData.itemText
                 ) {
-                    return x[selectData.itemValue as keyof SelectOption] === props.item[props.field.key as string]
+                    return x[selectData.itemValue as keyof SelectOption] === props.item[props.field.key as keyof ItemGenericType]
                 } else {
                     return false
                 }
             })
         } else {
             return selectData.items.find((x) => {
-                return x === props.item[props.field.key as string]
+                return x === props.item[props.field.key as keyof ItemGenericType]
             })
         }
     }
@@ -114,10 +114,10 @@ const formattedText = computed(() => {
         && !fieldSelectSelected.value
         && props.item
     ) {
-        const item_object = props.item[props.field.key as string]
+        const item_object = props.item[props.field.key as keyof ItemGenericType]
         if (item_object && typeof item_object === 'object') {
-            const item_object_object: Record<string, unknown> = item_object as Record<string, unknown>
-            formatted = item_object_object[selectData.itemText as string] as string
+            const item_object_object: ItemGenericType = item_object as ItemGenericType
+            formatted = item_object_object[selectData.itemText as keyof ItemGenericType] as string
         } else {
             formatted = item_object as string
         }
@@ -129,12 +129,12 @@ const formattedText = computed(() => {
         formatted = fieldSelectSelected.value[selectData.itemText as keyof SelectOption] as string
     } else if (isDate.value) {
         formatted
-            = props.item[props.field.key as string]
-                && formatDate(props.item[props.field.key as string], dateFormat.value)
-                ? formatDate(props.item[props.field.key as string], dateFormat.value)
+            = props.item[props.field.key as keyof ItemGenericType]
+                && formatDate(props.item[props.field.key as keyof ItemGenericType], dateFormat.value)
+                ? formatDate(props.item[props.field.key as keyof ItemGenericType], dateFormat.value)
                 : ''
     } else {
-        formatted = props.item[props.field.key as string] as string
+        formatted = props.item[props.field.key as keyof ItemGenericType] as string
     }
 
     if (props.field.fieldData) {

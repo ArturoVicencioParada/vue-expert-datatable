@@ -2,12 +2,12 @@
     <div class="expert-datatable-input-wrapper">
         <input
             :key="inputKey"
+            ref="inputRef"
+            v-model="localValue"
             class="expert-datatable-input datatable-field"
             :placeholder="placeholder"
-            :value="modelValue"
             :name="field.key"
             :type="htmlType"
-            @input="handleInput"
             @blur="handleBlur"
             @focus="handleFocus"
             @keydown="handleKeyDown"
@@ -15,26 +15,28 @@
     </div>
 </template>
 
-<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
-import { ref } from 'vue'
-import Field from '@/application/interface/field'
+<script setup lang="ts" generic="ItemGenericType = BaseEntity">
+import { ref, watch } from 'vue'
+import Field, { BaseEntity } from '@/application/interface/field'
+const inputRef = ref(null);
 
 interface Props {
     field: Field<ItemGenericType>
     modelValue: string | number
     placeholder?: string
-    htmlType?: 'button' | 'submit'
-    inputKey?: string
+    htmlType?: 'text' | 'number' | 'email' | 'password' | 'tel' | 'url' | 'search' | 'date' | 'time' | 'datetime-local' | 'month' | 'week' | 'color' | 'file' | 'hidden' | 'submit'
+    inputKey?: string;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     placeholder: '',
-    htmlType: 'button',
+    htmlType: 'text',
     inputKey: 'key'
 })
+const localValue = ref(props.modelValue);
 
 const emit = defineEmits<{
-    (e: 'update:modelValue', value: string): void
+    (e: 'update:modelValue', value: string | number): void
     (e: 'focus', event: FocusEvent): void
     (e: 'blur', event: FocusEvent): void
     (e: 'keydown', event: KeyboardEvent): void
@@ -42,10 +44,19 @@ const emit = defineEmits<{
 
 const focused = ref(false)
 
-const handleInput = (e: Event) => {
-    const target = e.target as HTMLInputElement
-    emit('update:modelValue', target ? target.value : '')
-}
+watch(
+    () => localValue.value,
+    (newValue) => {
+        emit('update:modelValue', newValue);
+    }
+);
+
+watch(
+    () => props.modelValue,
+    (newValue) => {
+        localValue.value = newValue;
+    }
+);
 
 const handleFocus = (e: FocusEvent) => {
     focused.value = true
@@ -60,6 +71,15 @@ const handleBlur = (e: FocusEvent) => {
 const handleKeyDown = (e: KeyboardEvent) => {
     emit('keydown', e)
 }
+
+const focus = () => {
+    console.log('focus expert-datatable-input', inputRef.value);
+    inputRef.value?.focus();
+}
+
+defineExpose({
+    focus
+})
 </script>
 
 <style lang="scss">

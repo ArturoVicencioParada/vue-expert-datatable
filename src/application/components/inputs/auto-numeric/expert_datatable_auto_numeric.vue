@@ -22,9 +22,9 @@
     </div>
 </template>
 
-<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
+<script setup lang="ts" generic="ItemGenericType = BaseEntity">
 import { ref, computed, watch, onMounted } from 'vue'
-import Field from '@/application/interface/field'
+import Field, { BaseEntity } from '@/application/interface/field'
 
 interface Props {
     field: Field<ItemGenericType>

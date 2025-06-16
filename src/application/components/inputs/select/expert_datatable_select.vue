@@ -47,7 +47,9 @@
                         @click="handleItemClick(item)"
                     >
                         <slot name="item-list" :item="item">
-                            <span v-if="selectData.itemText">{{ item[selectData.itemText] }}</span>
+                            <span v-if="selectData.itemText">
+                                {{ item[selectData.itemText as keyof SelectOptionType] }}
+                            </span>
                             <span v-else>{{ item }}</span>
                         </slot>
                     </div>
@@ -57,9 +59,9 @@
     </div>
 </template>
 
-<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>, SelectOptionType extends SelectOption">
+<script setup lang="ts" generic="ItemGenericType = BaseEntity, SelectOptionType extends SelectOption = SelectOption">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import Field, { SelectData, SelectOption } from '@/application/interface/field'
+import Field, { BaseEntity, SelectData, SelectOption } from '@/application/interface/field'
 
 interface Props {
     field: Field<ItemGenericType>
@@ -93,7 +95,7 @@ const emit = defineEmits<{
     (e: 'focus'): void
     (e: 'blur'): void
     (e: 'open', value: boolean): void
-    (e: 'selected-item', item: ItemGenericType): void
+    (e: 'selected-item', item: SelectOptionType): void
     (e: 'deselect-row'): void
 }>()
 
@@ -149,16 +151,16 @@ const filteredItems = computed<SelectOptionType[]>(() => {
 })
 
 // Methods
-const getItemKey = (item: ItemGenericType, index: number): string => {
+const getItemKey = (item: SelectOptionType, index: number): string => {
     if (selectData.value.itemValue) {
-        return `item_${item[selectData.value.itemValue]}`
+        return `item_${item[selectData.value.itemValue as keyof SelectOptionType]}`
     }
     return typeof item === 'object' ? `item_${index}` : `item_${item}`
 }
 
-const handleItemClick = (item: ItemGenericType) => {
+const handleItemClick = (item: SelectOptionType) => {
     selectedItem.value = item
-    const value = selectData.value.itemValue ? item[selectData.value.itemValue] : item
+    const value = selectData.value.itemValue ? item[selectData.value.itemValue as keyof SelectOptionType] : item
     emit('update:modelValue', value as string | number | object | undefined)
     emit('change', value as string | number | object | undefined)
     emit('selected-item', item)
@@ -207,7 +209,9 @@ watch(() => props.modelValue, (newValue) => {
 
     if (selectData.value.items) {
         if (selectData.value.itemValue) {
-            selectedItem.value = selectData.value.items.find((item) => item[selectData.value.itemValue!] === newValue)
+            selectedItem.value = selectData.value.items.find(
+                (item) => item[selectData.value.itemValue as keyof SelectOptionType] === newValue
+            )
         } else {
             selectedItem.value = selectData.value.items.find((item) => item === newValue)
         }
@@ -231,7 +235,9 @@ watch(() => props.field.selectData, (newValue: SelectData<SelectOption> | undefi
             const value = props.modelValue
             if (newValue.items) {
                 if (newValue.itemValue) {
-                    selectedItem.value = newValue.items.find((item) => item[newValue.itemValue as keyof SelectOption] === value)
+                    selectedItem.value = newValue.items.find(
+                        (item) => item[newValue.itemValue as keyof SelectOption] === value
+                    )
                 } else {
                     selectedItem.value = newValue.items.find((item) => item === value)
                 }

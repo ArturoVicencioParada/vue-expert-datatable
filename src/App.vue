@@ -6,39 +6,8 @@
             table-name="users"
             :fields="fields"
             :data="tableData"
-            :rest-api-url="apiUrl"
-            :add-method="addMethod"
-            :update-method="updateMethod"
-            :get-method="getMethod"
-            :delete-method="deleteMethod"
-            :item-name="'user'"
             :key-name="'id'"
-            :http-headers="headers"
             :item="defaultItem"
-            :disable-auto-crud="false"
-            :lang="'ES'"
-            :size="'normal'"
-            :bordered="true"
-            :save-on-blur="true"
-            :show-alerts="true"
-            :use-edit-modal="true"
-            :use-delete-modal="true"
-            :allow-adding="true"
-            :show-edit-button="true"
-            :show-delete-button="true"
-            :show-editing-icon="true"
-            :hide-actions-field="false"
-            :logging="true"
-            @updated-data="onDataUpdated"
-            @load-data="onLoadData"
-            @error="onError"
-            @alert="onAlert"
-            @edit-item="onEditItem"
-            @delete-item="onDeleteItem"
-            @inserted-item="onItemInserted"
-            @added-item="onItemAdded"
-            @updated-item="onItemUpdated"
-            @change-item-add="onItemAddChange"
         />
     </div>
 </template>
@@ -48,9 +17,18 @@ import { ref } from 'vue';
 import VueExpertDatatable from './vue-expert-datatable.vue';
 import type { Field } from './application/interface/field';
 import type { Method } from './application/interface/method';
+import { z } from 'zod';
+
+interface User {    
+    id: number | undefined;
+    name: string;
+    email: string;
+    role: string;
+    active: boolean;
+}
 
 // Configuración de campos
-const fields = ref<Field[]>([
+const fields = ref<Field<User>[]>([
     {
         title: 'ID',
         align: 'left',
@@ -67,7 +45,9 @@ const fields = ref<Field[]>([
         fieldType: 'text',
         editable: true,
         pronoun: 'el',
-        rules: 'required|min:3',
+        rules: z.object({
+            name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres')
+        }),
     },
     {
         title: 'Email',
@@ -77,7 +57,9 @@ const fields = ref<Field[]>([
         fieldType: 'text',
         editable: true,
         pronoun: 'el',
-        rules: 'required|email',
+        rules: z.object({
+            email: z.string().email('Email inválido').min(1, 'El email es requerido')
+        }),
     },
     {
         title: 'Rol',
@@ -103,7 +85,9 @@ const fields = ref<Field[]>([
                 },
             ]
         },
-        rules: 'required',
+        rules: z.object({
+            role: z.string().min(1, 'El rol es requerido')
+        }),
     },
     {
         title: 'Activo',
@@ -123,7 +107,7 @@ const fields = ref<Field[]>([
 ]);
 
 // Datos de ejemplo
-const tableData = ref([
+const tableData = ref<User[]>([
     {
         id: 1,
         name: 'Juan Pérez',
@@ -178,7 +162,7 @@ const headers = ref({
 });
 
 // Item por defecto para nuevos registros
-const defaultItem = ref({
+const defaultItem = ref<User>({
     id: undefined,
     name: '',
     email: '',

@@ -52,21 +52,15 @@
                         }"
                         v-bind="bindData && bindData.row ? bindData.row(row as ItemGenericType, index) : {}"
                     >
-                        <ValidationObserver
-                            v-for="field in final_fields.filter((x) => x.visible === true)"
-                            :key="`record_${index}_${table_identifier}_${field.key}`"
-                            :ref="'form_edit_item_' + index + '_' + field.key"
-                            slim
-                        >
-                            <ValidationProvider
-                                v-slot="{ errors, validate, classes }"
-                                :name="field.title.toLowerCase()"
-                                :rules="prepareRules(field, row as ItemGenericType, index)"
-                                slim
+                        <td v-for="field in final_fields.filter((x) => x.visible === true)" :key="`record_${index}_${table_identifier}_${field.key}`">
+                            <VeeForm
+                                :ref="'form_edit_item_' + index + '_' + field.key"
+                                v-slot="{ errors, handleSubmit }"
+                                tag="td"
                             >
-                                <td
+                                <div
                                     class="expert-column"
-                                    :class="expert_column_class(field, classes, index)"
+                                    :class="expert_column_class(field, errors, index)"
                                     v-bind="
                                         field.bind_data && field.bind_data.custom_field
                                             ? field.bind_data.custom_field(row as ItemGenericType, field, index)
@@ -101,7 +95,7 @@
                                                 :select-row="event_select_row(row as ItemGenericType, index, field)"
                                                 :deselect-row="deSelectRow"
                                                 :item="row"
-                                                :value="row[field.key]"
+                                                :value="row[field.key as keyof ItemGenericType]"
                                                 :header="field"
                                                 :selected="is_selected_item(index, field)"
                                                 :selected_row="selected_index === index"
@@ -115,7 +109,7 @@
                                                         !field.fieldAlwaysVisible
                                                 "
                                                 :errors="errors"
-                                                :validate="validate"
+                                                :validate="handleSubmit"
                                             >
                                                 <item-text
                                                     :key="`item_text_${index}_${table_identifier}_${field.key}`"
@@ -136,7 +130,7 @@
                                             :deselect-row="deSelectRow"
                                             :key_down="event_key_down"
                                             :item="row"
-                                            :value="row[field.key]"
+                                            :value="row[field.key as keyof ItemGenericType]"
                                             :header="field"
                                             :selected="
                                                 selected_index === index &&
@@ -147,21 +141,30 @@
                                             :adding="false"
                                             :index="index"
                                             :errors="errors"
-                                            :validate="validate"
+                                            :validate="handleSubmit"
                                         >
                                             <template
                                                 v-if="field.fieldType 
                                                     && is_editable(field, row as ItemGenericType)"
                                             >
-                                                <item-field
-                                                    :key="`item_field_${index}_${table_identifier}_${field.key}`"
-                                                    :field="(field as Field<Record<string, unknown>>)"
-                                                    :table-name="tableName"
-                                                    :value="row[field.key]"
-                                                    :index="index"
-                                                    :config="global_config"
-                                                    v-on="event_listeners_input(row as ItemGenericType, index, field)"
-                                                />
+                                                <VeeField
+                                                    :name="field.key"
+                                                    :rules="prepareRules(field, row as ItemGenericType, index)"
+                                                >
+                                                    <item-field
+                                                        :ref="`item_field`"
+                                                        :key="`item_field_${index}_${table_identifier}_${field.key}`"
+                                                        v-model="row[field.key as keyof ItemGenericType]"
+                                                        :field="(field)"
+                                                        :table-name="tableName"
+                                                        :is-adding="false"
+                                                        :index="index"
+                                                        :config="global_config"
+                                                        @blur="event_blur"
+                                                        @keydown="event_key_down"
+                                                    />
+                                                    <ErrorMessage :name="field.key" />
+                                                </VeeField>
                                             </template>
                                             <template v-else>
                                                 <item-text
@@ -184,8 +187,8 @@
 
                                     <div v-else>
                                         <slot
-                                            v-if="$slots['actions.' + row[keyName]]"
-                                            :name="'actions.' + row[keyName]"
+                                            v-if="$slots['actions.' + row[keyName as keyof ItemGenericType]]"
+                                            :name="'actions.' + row[keyName as keyof ItemGenericType]"
                                             :item="row"
                                             :header="field"
                                             :adding="false"
@@ -212,7 +215,9 @@
                                                 v-tooltip="current_language?.delete_button_text"
                                                 type="button"
                                                 class="expert-datatable-action-button"
-                                                @click="modalDeleteItem(row[field.key] as ItemGenericType, index)"
+                                                @click="
+                                                    modalDeleteItem(row[field.key as keyof ItemGenericType] as ItemGenericType, index)
+                                                "
                                             >
                                                 <font-awesome-icon icon="trash" />
                                             </button>
@@ -270,9 +275,9 @@
                                             />
                                         </slot>
                                     </div>
-                                </td>
-                            </ValidationProvider>
-                        </ValidationObserver>
+                                </div>
+                            </VeeForm>
+                        </td>
                     </tr>
                 </template>
                 <tr
@@ -296,25 +301,25 @@
                         </td>
                     </slot>
                 </tr>
-                <ValidationObserver
+                <VeeForm
                     v-if="allowAdding"
                     ref="form_add_item"
                     key="tr_add_1"
+                    v-slot="{ handleSubmit }"
                     tag="tr"
                     class="expert-row add-item-row"
                     v-bind="bindData && bindData.add_row ? bindData.add_row : {}"
                 >
-                    <ValidationProvider
+                    <VeeField
                         v-for="field in final_fields.filter((x) => x.visible === true)"
                         :key="`record_add_${table_identifier}_${field.key}`"
-                        v-slot="{ errors, validate, classes }"
-                        :name="field.title.toLowerCase()"
+                        v-slot="{ errors, handleChange }"
+                        :name="field.key"
                         :rules="prepareRules(field, item_record as ItemGenericType, 'add')"
-                        slim
                     >
                         <td
                             class="expert-column"
-                            :class="expert_column_class(field, classes, undefined, true)"
+                            :class="expert_column_class(field, errors, undefined, true)"
                             v-bind="
                                 field.bind_data && field.bind_data.custom_add_field
                                     ? field.bind_data.custom_add_field(field)
@@ -341,25 +346,23 @@
                                     :selected_row="undefined"
                                     :adding="true"
                                     :errors="errors"
-                                    :validate="validate"
+                                    :validate="handleSubmit"
                                     :index="'adding'"
                                 >
                                     <item-field
                                         v-if="field.editable"
+                                        :ref="`item_field_add_${table_identifier}_${field.key}`"
                                         :key="`item_field_add_${table_identifier}_${field.key}`"
-                                        :field="(field as Field<Record<string, unknown>>)"
+                                        :field="(field)"
                                         :table-name="tableName"
-                                        :value="item_record[field.key]"
-                                        index="add"
-                                        is-adding
+                                        :model-value="item_record[field.key]"
+                                        :is-adding="true"
+                                        :index="'add'"
+                                        :config="global_config"
+                                        @update:model-value="handleChange"
                                         v-on="event_listeners_input(undefined, undefined, field)"
                                     />
-                                    <item-text
-                                        v-else-if="item_record"
-                                        :key="`item_text_add_${table_identifier}_${field.key}`"
-                                        :field="field"
-                                        :item="(item_record as ItemGenericType)"
-                                    />
+                                    <ErrorMessage :name="field.key" />
                                 </slot>
                                 <slot
                                     v-else
@@ -375,25 +378,23 @@
                                     :selected_row="undefined"
                                     :adding="true"
                                     :errors="errors"
-                                    :validate="validate"
+                                    :validate="handleSubmit"
                                     :index="'adding'"
                                 >
                                     <item-field
                                         v-if="field.editable"
+                                        :ref="`item_field_add_${table_identifier}_${field.key}`"
                                         :key="`item_field_add_${table_identifier}_${field.key}`"
-                                        :field="(field as Field<Record<string, unknown>>)"
+                                        :field="(field)"
                                         :table-name="tableName"
-                                        :value="item_record[field.key]"
-                                        index="add"
-                                        is-adding
+                                        :model-value="item_record[field.key]"
+                                        :is-adding="true"
+                                        :index="'add'"
+                                        :config="global_config"
+                                        @update:model-value="handleChange"
                                         v-on="event_listeners_input(undefined, undefined, field)"
                                     />
-                                    <item-text
-                                        v-else-if="item_record"
-                                        :key="`item_text_add_${table_identifier}_${field.key}`"
-                                        :field="field"
-                                        :item="(item_record as ItemGenericType)"
-                                    />
+                                    <ErrorMessage :name="field.key" />
                                 </slot>
                             </div>
                             <span v-else>
@@ -415,17 +416,17 @@
                                 </slot>
                             </span>
                         </td>
-                    </ValidationProvider>
-                </ValidationObserver>
+                    </VeeField>
+                </VeeForm>
             </tbody>
         </table>
     </div>
 </template>
 
-<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown> = Record<string, unknown>">
-import { ref, computed, watch, nextTick, onMounted, getCurrentInstance, useSlots, Ref } from 'vue';
+<script setup lang="ts" generic="ItemGenericType = BaseEntity">
+import { ref, computed, watch, nextTick, onMounted, getCurrentInstance, useSlots, Ref, useTemplateRef } from 'vue';
 import axios from 'axios';
-import type { Field } from './application/interface/field';
+import type { BaseEntity, Field } from './application/interface/field';
 import MethodInterface from './application/interface/method';
 import AlertInterface from './application/interface/alert';
 import CustomEvents from './application/interface/custom_events';
@@ -439,17 +440,20 @@ import dayjs from 'dayjs';
 import Language from './application/interface/language';
 import Configuration from './application/interface/configuration';
 import { HttpClient } from './application/interface/http_client_interface';
+import { Form as VeeForm, Field as VeeField, ErrorMessage } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
+import { z } from 'zod';
 
-interface ExpertDatatableProps<T extends Record<string, unknown>> {
+interface ExpertDatatableProps<T = BaseEntity> {
     tableName: string;
     fields: Array<Field<T>>;
     data?: Array<T>;
     restApiUrl?: string;
-    addMethod: MethodInterface;
-    updateMethod: MethodInterface;
-    getMethod: MethodInterface;
-    deleteMethod: MethodInterface;
-    itemName: string;
+    addMethod?: MethodInterface;
+    updateMethod?: MethodInterface;
+    getMethod?: MethodInterface;
+    deleteMethod?: MethodInterface;
+    itemName?: string;
     keyName?: string;
     httpClient?: HttpClient;
     httpHeaders?: Record<string, string>;
@@ -469,7 +473,7 @@ interface ExpertDatatableProps<T extends Record<string, unknown>> {
     showDeleteButton?: boolean;
     showEditingIcon?: boolean;
     hideActionsField?: boolean;
-    customEvents?: CustomEvents;
+    customEvents?: CustomEvents<T>;
     bindData?: BindDataProp<ItemGenericType>;
     logging?: boolean;
 }
@@ -477,6 +481,11 @@ interface ExpertDatatableProps<T extends Record<string, unknown>> {
 const props = withDefaults(defineProps<ExpertDatatableProps<ItemGenericType>>(), {
     data: () => [],
     restApiUrl: undefined,
+    addMethod: undefined,
+    updateMethod: undefined,
+    getMethod: undefined,
+    deleteMethod: undefined,
+    itemName: 'item',
     keyName: 'id',
     httpClient: undefined,
     httpHeaders: () => ({
@@ -722,6 +731,7 @@ const initData = (): void => {
         const item_field = props.fields[index];
         const default_value = item_field.default_value !== undefined ? item_field.default_value : '';
         item_record.value = {};
+        item_record_default.value = {};
         item_record.value[item_field.key] = default_value;
         item_record_default.value[item_field.key] = default_value;
     }
@@ -781,7 +791,7 @@ const saveTableData = async (is_adding = false) => {
                                         props.customEvents.before_add(
                                             item_record_copy,
                                             selected_index.value,
-                                            selected_field.value as Field<Record<string, unknown>>
+                                            selected_field.value
                                         )
                                     ).then((cont) => {
                                         if (!cont) {
@@ -792,7 +802,7 @@ const saveTableData = async (is_adding = false) => {
                                                 props.customEvents.before_save(
                                                     item_record_copy,
                                                     selected_index.value,
-                                                    selected_field.value as Field<Record<string, unknown>>
+                                                    selected_field.value
                                                 )
                                             );
                                         }
@@ -811,8 +821,8 @@ const saveTableData = async (is_adding = false) => {
                                         if (http_method) {
                                             http_method.then((response) => {
                                                 if (
-                                                    response.data.update_table
-                                                    || response.data[props.itemName] === undefined
+                                                    response.data['update_table' as keyof ItemGenericType]
+                                                    || response.data[props.itemName as keyof ItemGenericType] === undefined
                                                 ) {
                                                     getTableData();
                                                 } else {
@@ -826,7 +836,7 @@ const saveTableData = async (is_adding = false) => {
                                                         props.customEvents.after_add(
                                                             item_record_copy,
                                                             selected_index.value,
-                                                            selected_field.value as Field<Record<string, unknown>>
+                                                            selected_field.value
                                                         )
                                                     );
                                                 }
@@ -840,7 +850,7 @@ const saveTableData = async (is_adding = false) => {
                                                         props.customEvents.after_save(
                                                             item_record_copy,
                                                             selected_index.value,
-                                                            selected_field.value as Field<Record<string, unknown>>
+                                                            selected_field.value
                                                         )
                                                     );
                                                 }
@@ -852,7 +862,6 @@ const saveTableData = async (is_adding = false) => {
                                                 copyObject(item_record.value, item_record_default.value);
                                                 copyObject(item_record_before.value, item_record_default.value);
                                                 deSelectRow().then(() => {
-                                                    // form.reset();
                                                     resolve(item_record_copy);
                                                 });
                                             }).catch((error) => {
@@ -875,7 +884,7 @@ const saveTableData = async (is_adding = false) => {
                                     props.customEvents.before_add(
                                         item_record_copy,
                                         selected_index.value,
-                                        selected_field.value as Field<Record<string, unknown>>
+                                        selected_field.value
                                     )
                                 ).then((cont) => {
                                     if (!cont) {
@@ -886,7 +895,7 @@ const saveTableData = async (is_adding = false) => {
                                             props.customEvents.before_save(
                                                 item_record_copy,
                                                 selected_index.value,
-                                                selected_field.value as Field<Record<string, unknown>>
+                                                selected_field.value
                                             )
                                         );
                                     }
@@ -904,7 +913,7 @@ const saveTableData = async (is_adding = false) => {
                                                 props.customEvents.after_add(
                                                     item_record_copy,
                                                     selected_index.value,
-                                                    selected_field.value as Field<Record<string, unknown>>
+                                                    selected_field.value
                                                 )
                                             );
                                         }
@@ -918,7 +927,7 @@ const saveTableData = async (is_adding = false) => {
                                                 props.customEvents.after_save(
                                                     item_record_copy,
                                                     selected_index.value,
-                                                    selected_field.value as Field<Record<string, unknown>>
+                                                    selected_field.value
                                                 )
                                             );
                                         }
@@ -930,7 +939,6 @@ const saveTableData = async (is_adding = false) => {
                                         emit('updated-data', table_data.value);
                                         emit('added-item', item_record_copy);
                                         deSelectRow().then(() => {
-                                            // form.reset();
                                             resolve(item_record.value);
                                         });
                                     });
@@ -949,7 +957,7 @@ const saveTableData = async (is_adding = false) => {
                                         props.customEvents.before_edit(
                                             selected_row_copy,
                                             selected_index.value,
-                                            selected_field.value as Field<Record<string, unknown>>
+                                            selected_field.value
                                         )
                                     ).then((cont) => {
                                         if (!cont) {
@@ -960,7 +968,7 @@ const saveTableData = async (is_adding = false) => {
                                                 props.customEvents.before_save(
                                                     selected_row_copy,
                                                     selected_index.value,
-                                                    selected_field.value as Field<Record<string, unknown>>
+                                                    selected_field.value
                                                 )
                                             );
                                         }
@@ -979,8 +987,8 @@ const saveTableData = async (is_adding = false) => {
                                         if (http_method) {
                                             http_method.then((response) => {
                                                 if (
-                                                    response.data.update_table
-                                                    || response.data[props.itemName] === undefined
+                                                    response.data['update_table' as keyof ItemGenericType]
+                                                    || response.data[props.itemName as keyof ItemGenericType] === undefined
                                                 ) {
                                                     getTableData();
                                                 } else {
@@ -991,7 +999,7 @@ const saveTableData = async (is_adding = false) => {
                                                         props.customEvents.after_edit(
                                                             selected_row_copy,
                                                             selected_index.value,
-                                                            selected_field.value as Field<Record<string, unknown>>
+                                                            selected_field.value
                                                         )
                                                     );
                                                 }
@@ -1000,15 +1008,14 @@ const saveTableData = async (is_adding = false) => {
                                                         props.customEvents.after_save(
                                                             selected_row_copy,
                                                             selected_index.value,
-                                                            selected_field.value as Field<Record<string, unknown>>
+                                                            selected_field.value
                                                         )
                                                     );
                                                 }
-                                                emit('updated-item', response.data[props.itemName]);
+                                                emit('updated-item', response.data[props.itemName as keyof ItemGenericType]);
                                                 selected_row_before.value = cloneObject(item_record_default.value);
                                                 deSelectRow().then(() => {
-                                                    // form.reset();
-                                                    resolve(response.data[props.itemName]);
+                                                    resolve(response.data[props.itemName as keyof ItemGenericType]);
                                                 });
                                             }).catch((error) => {
                                                 throw new Exception(error.message, 1);
@@ -1029,7 +1036,7 @@ const saveTableData = async (is_adding = false) => {
                                     props.customEvents.before_edit(
                                         selected_row_copy,
                                         selected_index.value,
-                                        selected_field.value as Field<Record<string, unknown>>
+                                        selected_field.value
                                     )
                                 ).then((cont) => {
                                     if (!cont) {
@@ -1040,7 +1047,7 @@ const saveTableData = async (is_adding = false) => {
                                             props.customEvents.before_save(
                                                 selected_row_copy,
                                                 selected_index.value,
-                                                selected_field.value as Field<Record<string, unknown>>
+                                                selected_field.value
                                             )
                                         );
                                     }
@@ -1059,7 +1066,7 @@ const saveTableData = async (is_adding = false) => {
                                             props.customEvents.after_edit(
                                                 selected_row_copy,
                                                 selected_index.value,
-                                                selected_field.value as Field<Record<string, unknown>>
+                                                selected_field.value
                                             )
                                         );
                                     }
@@ -1073,7 +1080,7 @@ const saveTableData = async (is_adding = false) => {
                                             props.customEvents.after_save(
                                                 selected_row_copy,
                                                 selected_index.value,
-                                                selected_field.value as Field<Record<string, unknown>>
+                                                selected_field.value
                                             )
                                         );
                                     }
@@ -1083,7 +1090,6 @@ const saveTableData = async (is_adding = false) => {
                                         return false;
                                     }
                                     deSelectRow().then(() => {
-                                        // form.reset();
                                         resolve(selected_row_copy);
                                     });
                                 }).catch((error) => {
@@ -1094,20 +1100,10 @@ const saveTableData = async (is_adding = false) => {
                     }
                 } else {
                     let error_message = current_language.value?.fill_required_fields || '';
-                    // for (const key in form.errors) {
-                    //     if (Object.prototype.hasOwnProperty.call(form.errors, key)) {
-                    //         const error = form.errors[key];
-
-                    //         if (Array.isArray(error) && error.length > 0) {
-                    //             error_message = error[0];
-                    //         }
-                    //     }
-                    // }
                     if (props.logging) console.log('is_adding', is_adding);
                     if (!is_adding) {
                         cancel_editing();
                     }
-                    // form.reset();
                     throw new Exception(error_message, 10);
                 }
             }
@@ -1210,17 +1206,15 @@ const deSelectRow = () => {
         });
     });
 };
+const dynamicRefs = useTemplateRef<{ focus: () => void }[]>('item_field');
 
 const focusSelectedInput = (field: Field<ItemGenericType>, index: number | undefined = undefined) => {
     nextTick(() => {
         if (field && (index || index === 0)) {
-            const refName = `item_${index}_${field.key}`;
-            const target = document.querySelector(`[ref="${refName}"]`);
-            if (target instanceof Element) {
-                const input: HTMLInputElement | null = target.querySelector(`[name="${field.key}"]`);
-                if (input && input.focus) {
-                    input.focus();
-                }
+            const refName = `item_field_${index}_${table_identifier.value}_${field.key}`;
+            console.log('dynamicRefs', refName, dynamicRefs.value?.[0]);
+            if (dynamicRefs) {
+                dynamicRefs.value?.[0]?.focus();
             }
         }
     });
@@ -1228,7 +1222,7 @@ const focusSelectedInput = (field: Field<ItemGenericType>, index: number | undef
 
 const is_selected_row = (row: ItemGenericType) => {
     if (selected_row.value !== undefined) {
-        return selected_row.value[props.keyName] == row[props.keyName];
+        return selected_row.value[props.keyName] == row[props.keyName as keyof ItemGenericType];
     } else {
         return false;
     }
@@ -1331,7 +1325,7 @@ const showAlert = (alert: AlertInterface) => {
 
 const expert_column_class = (
     field: Field<ItemGenericType>,
-    bindClasses: Record<string, boolean> | undefined = undefined,
+    errors: Partial<Record<string, string | undefined>> | string[] | undefined = undefined,
     index: number | undefined = undefined,
     is_adding = false
 ) => {
@@ -1346,13 +1340,8 @@ const expert_column_class = (
             classes['column-selected'] = true;
         }
     }
-    if (bindClasses) {
-        for (const key in bindClasses) {
-            if (Object.prototype.hasOwnProperty.call(bindClasses, key)) {
-                const current_class = bindClasses[key];
-                classes[key] = current_class;
-            }
-        }
+    if (errors && Object.keys(errors).length > 0) {
+        classes['has-error'] = true;
     }
     return classes;
 };
@@ -1385,11 +1374,12 @@ const event_listeners_input = (
         return undefined;
     }
     return {
-        input: (e: unknown) => event_input(e),
-        change: (e: unknown) => event_input(e),
-        blur: () => event_blur(),
-        focus: () => event_focus(row, index, field),
-        keydown: (e: KeyboardEvent) => event_key_down(e),
+        onBlur: () => event_blur(),
+        onFocus: () => event_focus(row, index, field),
+        onInput: (e: unknown) => event_input(e),
+        onChange: (e: unknown) => event_input(e),
+        onKeydown: (e: KeyboardEvent) => event_key_down(e),
+        'onUpdate:modelValue': (value: unknown) => event_input(value),
         deselectRow: () => deSelectRow(),
     };
 };
@@ -1457,31 +1447,28 @@ const hasScopedSlotStartsWith = (name: string) => {
 };
 
 const copyObject = (target: ItemGenericType, source: ItemGenericType): ItemGenericType => {
-    if (target && source) {
-        const targetCopy: ItemGenericType = Object.assign({}, source);
-        if (props.logging) console.log('copy object source', source);
-        for (const prop in source) {
-            if (typeof target[prop] !== 'undefined') {
-                if (Array.isArray(source[prop])) {
-                    targetCopy[prop] = clone(source[prop]);
-                } else if (dayjs.isDayjs(source[prop])) {
-                    targetCopy[prop] = source[prop].clone() as ItemGenericType[Extract<keyof ItemGenericType, string>];
-                } else if (typeof source[prop] === 'object' && !!source[prop]) {
-                    copyObject(targetCopy[prop] as ItemGenericType, source[prop] as ItemGenericType);
-                } else {
-                    targetCopy[prop] = source[prop];
-                }
+    const targetCopy: ItemGenericType = Object.assign({}, source);
+    if (props.logging) console.log('copy object source', source);
+    for (const prop in source) {
+        if (typeof target[prop] !== 'undefined') {
+            if (Array.isArray(source[prop])) {
+                targetCopy[prop as keyof ItemGenericType] = clone(source[prop]);
+            } else if (dayjs.isDayjs(source[prop])) {
+                targetCopy[prop] = source[prop].clone() as ItemGenericType[Extract<keyof ItemGenericType, string>];
+            } else if (typeof source[prop] === 'object' && !!source[prop]) {
+                copyObject(targetCopy[prop] as ItemGenericType, source[prop] as ItemGenericType);
+            } else {
+                targetCopy[prop] = source[prop];
             }
         }
-        if (props.logging) console.log('copy object final', targetCopy);
-        Object.assign(target, targetCopy);
-        return clone(target);
     }
-    return {} as ItemGenericType;
+    if (props.logging) console.log('copy object final', targetCopy);
+    Object.assign(target as object, targetCopy);
+    return clone(target as object) as ItemGenericType;
 };
 
 const cloneObject = (source: ItemGenericType): ItemGenericType => {
-    return clone(source);
+    return clone(source as object) as ItemGenericType;
 };
 
 const formatValue = (val: unknown, field: Field<ItemGenericType>) => {
@@ -1502,8 +1489,8 @@ const cleanForm = async () => {
 
 const is_editable = (field: Field<ItemGenericType>, item: ItemGenericType) => {
     if (item) {
-        if (item.ved_can_edit !== undefined) {
-            return item.ved_can_edit;
+        if (item['ved_can_edit' as keyof ItemGenericType] !== undefined) {
+            return item['ved_can_edit' as keyof ItemGenericType];
         }
     }
     if (field.key === 'actions') {
@@ -1514,8 +1501,8 @@ const is_editable = (field: Field<ItemGenericType>, item: ItemGenericType) => {
 
 const can_delete = (field: Field<ItemGenericType>, item: ItemGenericType) => {
     if (item) {
-        if (item.ved_can_delete !== undefined) {
-            return item.ved_can_delete;
+        if (item['ved_can_delete' as keyof ItemGenericType] !== undefined) {
+            return item['ved_can_delete' as keyof ItemGenericType];
         }
     }
     if (field.key === 'actions') {
@@ -1524,13 +1511,14 @@ const can_delete = (field: Field<ItemGenericType>, item: ItemGenericType) => {
     return field.editable || false;
 };
 
-const prepareRules = (field: Field<ItemGenericType>, item: ItemGenericType | undefined, index: number | string) => {
-    if (typeof field.rules === 'string') {
-        return field.rules;
-    } else if (typeof field.rules === 'function') {
-        return field.rules(field, item, index);
-    }
-    return '';
+const prepareRules = (
+    field: Field<ItemGenericType>,
+    _item: ItemGenericType | undefined,
+    _index: number | string
+): Record<string, unknown> => {
+    console.log('prepareRules', field.rules);
+    const schema = toTypedSchema(field.rules || z.any());
+    return schema as unknown as Record<string, unknown>;
 };
 
 // Lifecycle hooks
@@ -1583,5 +1571,5 @@ defineExpose({
 </script>
 
 <style lang="scss">
-    @import 'style.module.scss';
+@use './style.module.scss';
 </style>

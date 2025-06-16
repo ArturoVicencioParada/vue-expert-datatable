@@ -16,11 +16,12 @@
     </div>
 </template>
 
-<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
+<script setup lang="ts" generic="ItemGenericType = BaseEntity">
 import { ref, watch, computed } from 'vue'
 import Datepicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import type Field from '@/application/interface/field'
+import { BaseEntity } from '@/application/interface/field';
 
 interface Props {
     modelValue: string | Date | number | null

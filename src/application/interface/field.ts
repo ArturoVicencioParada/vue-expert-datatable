@@ -10,7 +10,7 @@ export interface FieldData {
 	date_format?: string;
 }
 
-export interface SelectData<T extends Record<string, unknown>> {
+export interface SelectData<T> {
 	items?: Array<T>;
 	itemText?: string;
 	itemValue?: string;
@@ -26,6 +26,16 @@ export interface BindData<T extends Record<string, unknown>> {
 	custom_header_row: (field: Field<T>) => T;
 	custom_header_footer: (field: Field<T>) => T;
 }
+
+export interface SelectOption<T = string | number> {
+    value: T;
+    label: string;
+}
+
+export interface SelectOptionGroup<T = string | number> {
+    label: string;
+    options: SelectOption<T>[];
+} 
 
 export type FieldType = 'text' | 'longtext' | 'number' | 'autonumeric' | 'select' | 'range' | 'checkbox' | 'switch' | 'date' | 'datetime' | 'time' | 'week' | 'month' | 'year' | 'autocomplete' | 'custom' | undefined
 export interface Field<T extends Record<string, unknown> = Record<string, unknown>> {
@@ -43,7 +53,7 @@ export interface Field<T extends Record<string, unknown> = Record<string, unknow
     editable?: boolean,
     pronoun?: string,
 	rules?: string | ((field: Field<T>, item: T | undefined, index: number | string | undefined) => string)
-	selectData?: SelectData<T>,
+	selectData?: SelectData<SelectOption>,
 	bind_data?: BindData<T>
 	default_value?: unknown;
     name?: string;

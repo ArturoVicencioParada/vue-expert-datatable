@@ -1,0 +1,274 @@
+@import './application/scss/fonts.scss';
+
+$border-color: rgb(0 0 0 / 8%);
+$border: 1px solid $border-color;
+$border-focus-color: #40a9ff;
+$box-shadow: 0 0 0 2px rgb(24 144 255 / 20%);
+
+$font-size-small: 13px;
+$font-size-normal: 15px;
+$font-size-large: 19px;
+
+.vue-expert-datatable {
+	input, div, p, li, span {
+		font-family: 'Roboto', sans-serif;
+	}
+    width: 100%;
+
+	.align-left {
+		text-align: left;
+
+		input, select, span, label, p {
+			text-align: left;
+		}
+	}
+
+	.align-center {
+		text-align: center;
+
+		input, select, span, label, p, div {
+			text-align: center;
+		}
+	}
+
+	.align-right {
+		text-align: right;
+
+		input, select, span, label, p, div {
+			text-align: right;
+		}
+	}
+
+    .expert-datatable {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        &> tbody,
+        &> thead {
+            &> tr,
+			&> td,
+            &> th {
+				padding: 4px 4px;
+            }
+
+			&> tr,
+            &> td,
+            &> th,
+			input,
+			div,
+			span,
+			li,
+			p {
+				font-size: $font-size-normal;
+			}
+        }
+		.icon-editing {
+			font-size: $font-size-normal;
+		}
+		.expert-datatable-action-button {
+			font-size: 18px;
+			cursor: pointer;
+			margin-right: 4px;
+			margin-left: 3px;
+			color: rgba(0, 0, 0, 0.5);
+			padding: 1px;
+			border: none;
+			background-color: transparent;
+
+			&:hover {
+				color: rgba(0, 0, 0, 0.35);
+			}
+
+			&:active {
+				color: rgba(60, 79, 160, 0.74);
+			}
+		}
+        &.expert-datatable-small {
+            &> tbody,
+            &> thead {
+                &> tr,
+				&> td,
+				&> th {
+					padding: 0px;
+				}
+
+				&> tr,
+				&> td,
+				&> th,
+				input,
+				div,
+				span,
+				li,
+				p {
+					font-size: $font-size-small;
+				}
+            }
+
+			.expert-datatable-action-button {
+				font-size: $font-size-small;
+			}
+
+			.icon-editing {
+				font-size: $font-size-small;
+			}
+        }
+        &.expert-datatable-large {
+            &> tbody,
+            &> thead {
+                &> tr,
+				&> td,
+				&> th {
+					padding: 8px 8px;
+				}
+
+				&> tr,
+				&> td,
+				&> th,
+				input,
+				div,
+				span,
+				li,
+				p {
+					font-size: $font-size-large;
+				}
+            }
+
+			.expert-datatable-action-button {
+				font-size: $font-size-large;
+			}
+
+			.icon-editing {
+				font-size: $font-size-large;
+			}
+        }
+        &> thead {
+            &> tr {
+                &> th {
+					font-family: 'Roboto', sans-serif;
+                    color: rgba(0, 0, 0, .85);
+                    font-weight: 500;
+                    text-align: left;
+                    background: #fafafa;
+                    border-bottom: 1px solid #e8e8e8;
+                    transition: background .3s ease;
+                }
+            }
+        }
+
+		&.bordered {
+			&> thead, &> tbody {
+				&> tr {
+					&> th {
+						border-top: $border;
+					}
+					&> td:first-child, &> th:first-child {
+						border-left: $border;
+						border-right: $border;
+					}
+					&> td:not(:first-child), &> th:not(:first-child) {
+						border-right: $border;
+					}
+					&> td {
+						border-bottom: $border;
+					}
+				}
+			}
+		}
+
+		.expert-column {
+			position: relative;
+			font-family: 'Roboto', sans-serif;
+			padding: 4px 11px;
+			color: rgba(0, 0, 0, 0.65);
+			font-size: 14px;
+			.selectable {
+				cursor: pointer;
+			}
+			.expert-item {
+				width: 100%;
+				min-height: 15px;
+				display: inline-block;
+			}
+
+			.focused {
+				border-color: $border-focus-color;
+				box-shadow: $box-shadow;
+			}
+
+			&.align-left {
+				.icon-editing {
+					position: absolute;
+					right: 3px;
+					top: 3px;
+				}
+			}
+
+			&.align-center {
+				.icon-editing {
+					position: absolute;
+					right: 3px;
+					top: 3px;
+				}
+			}
+
+			&.align-right {
+				.icon-editing {
+					position: absolute;
+					left: 3px;
+					top: 3px;
+				}
+			}
+
+			&+.invalid {
+				border-left: 1px solid #f5222d8f;
+			}
+
+			&.invalid {
+				border-top: 1px solid #f5222d8f!important;
+				border-right: 1px solid #f5222d8f!important;
+				border-bottom: 1px solid #f5222d8f!important;
+			}
+
+			&.column-selected {
+				border-bottom-color: $border-focus-color;
+			}
+
+			&:hover {
+				background-color: #eeeeee;
+			}
+
+			&.selected {
+				background-color: #e0eef9;
+			}
+
+			.expert-item {
+				.expert-row-item {
+					width: 100%;
+					height: 100%;
+					min-height: 20px;
+
+					&>* {
+						width: 100%;
+						height: 100%;
+						min-height: 20px;
+						display: inline-block;
+					}
+
+					.expert-item-field {
+						width: 100%;
+						margin: 0;
+						padding: 0;
+						.datatable-field {
+							width: 100%;
+							margin: 0;
+						}
+					}
+				}
+			}
+		}
+
+		.expert-datatable-action-button {
+			
+		}
+    }
+}

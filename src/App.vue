@@ -46,15 +46,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import VueExpertDatatable from './vue-expert-datatable.vue';
-import type { FieldsInterface } from './application/interface/field';
-import type { MethodInterface } from './application/interface/method';
+import type { Field } from './application/interface/field';
+import type { Method } from './application/interface/method';
 
 // Configuración de campos
-const fields = ref<FieldsInterface[]>([
+const fields = ref<Field[]>([
     {
         title: 'ID',
         align: 'left',
-        value: 'id',
+        key: 'id',
         visible: true,
         editable: false,
         pronoun: 'el',
@@ -62,7 +62,7 @@ const fields = ref<FieldsInterface[]>([
     {
         title: 'Nombre',
         align: 'left',
-        value: 'name',
+        key: 'name',
         visible: true,
         fieldType: 'text',
         editable: true,
@@ -72,9 +72,9 @@ const fields = ref<FieldsInterface[]>([
     {
         title: 'Email',
         align: 'left',
-        value: 'email',
+        key: 'email',
         visible: true,
-        fieldType: 'email',
+        fieldType: 'text',
         editable: true,
         pronoun: 'el',
         rules: 'required|email',
@@ -82,24 +82,33 @@ const fields = ref<FieldsInterface[]>([
     {
         title: 'Rol',
         align: 'left',
-        value: 'role',
+        key: 'role',
         visible: true,
         fieldType: 'select',
         editable: true,
         pronoun: 'el',
-        fieldData: {
-            options: [
-                { value: 'admin', label: 'Administrador' },
-                { value: 'user', label: 'Usuario' },
-                { value: 'guest', label: 'Invitado' },
-            ],
+        selectData: {
+            items: [
+                {
+                    value: 'admin',
+                    label: 'Administrador' 
+                },
+                {
+                    value: 'user',
+                    label: 'Usuario' 
+                },
+                {
+                    value: 'guest',
+                    label: 'Invitado' 
+                },
+            ]
         },
         rules: 'required',
     },
     {
         title: 'Activo',
         align: 'center',
-        value: 'active',
+        key: 'active',
         visible: true,
         fieldType: 'checkbox',
         editable: true,
@@ -108,7 +117,7 @@ const fields = ref<FieldsInterface[]>([
     {
         title: 'Acciones',
         align: 'center',
-        value: 'actions',
+        key: 'actions',
         visible: true,
     },
 ]);
@@ -142,22 +151,22 @@ const tableData = ref([
 const apiUrl = ref('http://localhost:3000/api/users');
 
 // Métodos HTTP
-const addMethod: MethodInterface = {
+const addMethod: Method = {
     url: 'http://localhost:3000/api/users',
     type: 'POST',
 };
 
-const updateMethod: MethodInterface = {
+const updateMethod: Method = {
     url: 'http://localhost:3000/api/users',
     type: 'PUT',
 };
 
-const getMethod: MethodInterface = {
+const getMethod: Method = {
     url: 'http://localhost:3000/api/users',
     type: 'GET',
 };
 
-const deleteMethod: MethodInterface = {
+const deleteMethod: Method = {
     url: 'http://localhost:3000/api/users',
     type: 'DELETE',
 };
@@ -215,7 +224,10 @@ const onItemUpdated = (item: any) => {
 };
 
 const onItemAddChange = (newValue: any, oldValue: any) => {
-    console.log('Cambio en item de añadir:', { newValue, oldValue });
+    console.log('Cambio en item de añadir:', {
+        newValue,
+        oldValue 
+    });
 };
 </script>
 

@@ -7,7 +7,7 @@
 
 <script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
 import { computed } from 'vue'
-import type { Field } from '@/application/interface/field'
+import type { Field, SelectOption } from '@/application/interface/field'
 
 interface ItemTextProps {
     field: Field<ItemGenericType>;
@@ -58,7 +58,7 @@ const fieldSelectSelected = computed(() => {
                     && selectData.itemValue
                     && selectData.itemText
                 ) {
-                    return x[selectData.itemValue] === props.item[props.field.key as string]
+                    return x[selectData.itemValue as keyof SelectOption] === props.item[props.field.key as string]
                 } else {
                     return false
                 }
@@ -126,7 +126,7 @@ const formattedText = computed(() => {
         && selectData
         && selectData.itemText
     ) {
-        formatted = fieldSelectSelected.value[selectData.itemText] as string
+        formatted = fieldSelectSelected.value[selectData.itemText as keyof SelectOption] as string
     } else if (isDate.value) {
         formatted
             = props.item[props.field.key as string]

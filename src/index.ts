@@ -6,7 +6,6 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { faEdit, faTrash, faTrashAlt, faPlus, faSave, faPen, faPenAlt } from '@fortawesome/free-solid-svg-icons'
 import { faTrashCan, faTrashAlt as faTrashRegular, faPlusSquare } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { Form as ValidationProvider, Field as ValidationObserver } from 'vee-validate'
 import Validator from './application/utils/validator'
 import { VTooltip } from 'v-tooltip'
 import 'v-tooltip/dist/style.css'
@@ -45,8 +44,8 @@ export function VueExpertDatatablePlugin(app: App, options: Configuration | unde
     // Register components
     app.component('vue-expert-datatable', VueExpertDatatable)
     app.component('FontAwesomeIcon', FontAwesomeIcon)
-    app.component('ValidationProvider', ValidationProvider)
-    app.component('ValidationObserver', ValidationObserver)
+    // app.component('ValidationProvider', ValidationProvider)
+    // app.component('ValidationObserver', ValidationObserver)
 
     // Register directives
     app.directive('click-outside', ClickOutside)

@@ -57,15 +57,15 @@
     </div>
 </template>
 
-<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
+<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>, SelectOptionType extends SelectOption">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import Field, { SelectData } from '@/application/interface/field'
+import Field, { SelectData, SelectOption } from '@/application/interface/field'
 
 interface Props {
     field: Field<ItemGenericType>
     modelValue: string | number | object | undefined
     placeholder?: string
-    items?: ItemGenericType[]
+    items?: SelectOptionType[]
     itemText?: string
     itemValue?: string
     allowClear?: boolean
@@ -105,7 +105,7 @@ const searchText = ref('')
 const selectedItem = ref<ItemGenericType | undefined>(undefined)
 
 // Computed
-const selectData = computed<SelectData<ItemGenericType>>(() => {
+const selectData = computed<SelectData<SelectOptionType>>(() => {
     if (props.field.selectData) {
         return {
             items: props.field.selectData.items || [],
@@ -124,22 +124,22 @@ const selectData = computed<SelectData<ItemGenericType>>(() => {
     }
 })
 
-const filteredItems = computed<ItemGenericType[]>(() => {
+const filteredItems = computed<SelectOptionType[]>(() => {
     if (!selectData.value.items) return []
 
     if (!searchText.value) return selectData.value.items
 
     return selectData.value.items.filter((item) => {
         if (selectData.value.itemText && selectData.value.itemValue) {
-            const text = selectData.value.itemText ? String(item[selectData.value.itemText] || '') : ''
-            const value = selectData.value.itemValue ? String(item[selectData.value.itemValue] || '') : ''
+            const text = selectData.value.itemText ? String(item[selectData.value.itemText as keyof SelectOptionType] || '') : ''
+            const value = selectData.value.itemValue ? String(item[selectData.value.itemValue as keyof SelectOptionType] || '') : ''
             return text.toLowerCase().includes(searchText.value.toLowerCase())
                 || value.toLowerCase().includes(searchText.value.toLowerCase())
         } else if (selectData.value.itemText) {
-            const text = String(item[selectData.value.itemText] || '')
+            const text = String(item[selectData.value.itemText as keyof SelectOptionType] || '')
             return text.toLowerCase().includes(searchText.value.toLowerCase())
         } else if (selectData.value.itemValue) {
-            const value = String(item[selectData.value.itemValue] || '')
+            const value = String(item[selectData.value.itemValue as keyof SelectOptionType] || '')
             return value.toLowerCase().includes(searchText.value.toLowerCase())
         } else {
             const value = String(item)
@@ -221,7 +221,7 @@ watch(() => props.modelValue, (newValue) => {
 }, { immediate: true })
 
 // Watch for field.selectData changes
-watch(() => props.field.selectData, (newValue: SelectData<ItemGenericType> | undefined) => {
+watch(() => props.field.selectData, (newValue: SelectData<SelectOption> | undefined) => {
     if (newValue) {
         // Re-initialize select data
         selectedItem.value = undefined
@@ -231,7 +231,7 @@ watch(() => props.field.selectData, (newValue: SelectData<ItemGenericType> | und
             const value = props.modelValue
             if (newValue.items) {
                 if (newValue.itemValue) {
-                    selectedItem.value = newValue.items.find((item) => item[newValue.itemValue!] === value)
+                    selectedItem.value = newValue.items.find((item) => item[newValue.itemValue as keyof SelectOption] === value)
                 } else {
                     selectedItem.value = newValue.items.find((item) => item === value)
                 }

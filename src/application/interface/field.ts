@@ -10,38 +10,43 @@ export interface FieldData {
 	date_format?: string;
 }
 
-export interface SelectData {
-	items?: Array<any>;
+export interface SelectData<T extends Record<string, unknown>> {
+	items?: Array<T>;
 	itemText?: string;
 	itemValue?: string;
 	allowClear?: boolean;
 	allowSearch?: boolean;
 }
 
-export interface BindData {
-	custom_row: (row: any, index: number) => any;
-	custom_header: (field: Field) => any;
-	custom_field: (row: any, field: Field, index: number) => any;
-	custom_add_field: (field: Field) => any;
-	custom_header_row: (field: Field) => any;
-	custom_header_footer: (field: Field) => any;
+export interface BindData<T extends Record<string, unknown>> {
+	custom_row: (row: T, index: number) => T;
+	custom_header: (field: Field<T>) => T;
+	custom_field: (row: T, field: Field<T>, index: number) => T;
+	custom_add_field: (field: Field<T>) => T;
+	custom_header_row: (field: Field<T>) => T;
+	custom_header_footer: (field: Field<T>) => T;
 }
-export default interface Field {
+
+export type FieldType = 'text' | 'longtext' | 'number' | 'autonumeric' | 'select' | 'range' | 'checkbox' | 'switch' | 'date' | 'datetime' | 'time' | 'week' | 'month' | 'year' | 'autocomplete' | 'custom' | undefined
+export interface Field<T extends Record<string, unknown> = Record<string, unknown>> {
     align?: 'left' | 'center' | 'right',
     colSpan?: number,
-    value: string,
+    key: string,
     filterIcon?: string,
     sortable?: boolean,
     title: string,
     width?: string | number,
     visible?: boolean,
-    fieldType?: 'text' | 'longtext' | 'number' | 'autonumeric' | 'select' | 'range' | 'checkbox' | 'switch' | 'date' | 'datetime' | 'time' | 'week' | 'month' | 'autocomplete' | 'custom' | undefined,
+    fieldType?: FieldType,
 	fieldData?: FieldData,
 	fieldAlwaysVisible?: boolean,
     editable?: boolean,
     pronoun?: string,
-	rules?: string | ((field: Field, item: any, index: any) => string)
-	selectData?: SelectData,
-	bind_data?: BindData
-	default_value?: any;
+	rules?: string | ((field: Field<T>, item: T | undefined, index: number | string | undefined) => string)
+	selectData?: SelectData<T>,
+	bind_data?: BindData<T>
+	default_value?: unknown;
+    name?: string;
 }
+export default Field;
+

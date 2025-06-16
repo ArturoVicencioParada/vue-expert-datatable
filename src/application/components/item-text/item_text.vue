@@ -1,112 +1,157 @@
+<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <template>
-	<span @click="clickEvent" class="expert-item-text">
-		{{ formattedText }}
-	</span>
+    <span class="expert-item-text" @click="clickEvent">
+        {{ formattedText }}
+    </span>
 </template>
 
-<script lang="ts">
-import Field from '@/application/interface/field'
-import Vue, { PropType } from 'vue'
-import moment from 'moment'
-export default Vue.extend({
-	name: 'ExpertDatatableItemText',
-	props: {
-		field: {
-            type: Object as PropType<Field>,
-            required: true
-        },
-		item: {
-			type: Object as PropType<any>,
-			default: () => {
-				return {}
-			}
-		}
-	},
-	computed: {
-		field_select_selected () : any {
-			if (this.field.selectData && this.field.selectData.items) {
-				if (this.field.selectData.itemValue && this.field.selectData.itemText) {
-					return this.field.selectData.items.find(x => {
-						if (typeof x === 'object' && this.field.selectData && this.field.selectData.itemValue) {
-							return x[this.field.selectData.itemValue] === this.item[this.field.value]
-						} else {
-							return false
-						}
-					})
-				} else {
-					return this.field.selectData.items.find(x => {
-						return x === this.item[this.field.value]
-					})
-				}
-			}
-			return undefined
-		},
-		is_date () {
-			return ['date', 'datetime', 'time', 'month', 'year'].includes(this.field.fieldType)
-		},
-		date_format () {
-			if (this.is_date) {
-				if (this.field.fieldData.date_format) {
-					return this.field.fieldData.date_format
-				}
-				if (this.field.fieldType === 'date') {
-					return 'YYYY-MM-DD'
-				} else if (this.field.fieldType === 'datetime') {
-					return 'YYYY-MM-DD HH:mm:ss'
-				} else if (this.field.fieldType === 'time') {
-					return 'HH:mm:ss'
-				} else if (this.field.fieldType === 'month') {
-					return 'YYYY-MM'
-				} else if (this.field.fieldType === 'year') {
-					return 'YYYY'
-				} else {
-					return 'YYYY-MM-DD'
-				}
-			} else {
-				return 'YYYY-MM-DD'
-			}
-		},
-		formattedText () : any {
-			let formatted: any = ''
-			if (this.field.selectData && this.field.selectData.itemText && !this.field_select_selected && this.item) {
-				const item_object = this.item[this.field.value]
-				if (item_object && typeof this.item[this.field.value] === 'object') {
-					formatted = this.item[this.field.value][this.field.selectData.itemText]
-				} else {
-					formatted = this.item[this.field.value]
-				}
-			} else if (this.field_select_selected && this.field.selectData && this.field.selectData.itemText) {
-				formatted = this.field_select_selected[this.field.selectData.itemText]
-			} else if (this.is_date) {
-				formatted = this.item[this.field.value] && moment(this.item[this.field.value]).isValid() ? moment(this.item[this.field.value]).format(this.date_format) : ''
-			} else {
-				formatted = this.item[this.field.value]
-			}
-			
-			if (this.field.fieldData) {
-				if (this.field.fieldData.thousandSeparator) {
-					formatted = this.formatNumber(formatted, this.field.fieldData.thousandSeparator)
-				}
-				if (this.field.fieldData.useDollarSign) {
-					formatted = `$${formatted}`
-				}
-			}
-			return formatted
-		}
-	},
-	methods: {
-		clickEvent () {
-			this.$emit('click')
-		},
-		formatNumber (number: any, separator: string) {
-			if (typeof number === 'undefined') {
-				return 0
-			}
-			if (!number || isNaN(parseInt(number))) {
-				return 0
-			}
-			return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, separator)
-		}
-	}
+<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
+import { computed } from 'vue'
+import type { Field } from '@/application/interface/field'
+
+interface ItemTextProps {
+    field: Field<ItemGenericType>;
+    item: ItemGenericType;
+}
+
+const props = defineProps<ItemTextProps>()
+const emit = defineEmits<{ (e: 'click', item: ItemGenericType): void }>()
+
+const isDate = computed(() => {
+    return [
+        'date',
+        'datetime',
+        'time',
+        'month',
+        'year',
+    ].includes(props.field.fieldType || '')
 })
+
+const dateFormat = computed(() => {
+    if (!isDate.value) return 'YYYY-MM-DD'
+    if (props.field.fieldData && props.field.fieldData.date_format) {
+        return props.field.fieldData.date_format
+    }
+    switch (props.field.fieldType) {
+    case 'date':
+        return 'YYYY-MM-DD'
+    case 'datetime':
+        return 'YYYY-MM-DD HH:mm:ss'
+    case 'time':
+        return 'HH:mm:ss'
+    case 'month':
+        return 'YYYY-MM'
+    case 'year':
+        return 'YYYY'
+    default:
+        return 'YYYY-MM-DD'
+    }
+})
+
+const fieldSelectSelected = computed(() => {
+    const selectData = props.field.selectData
+    if (selectData && selectData.items) {
+        if (selectData.itemValue && selectData.itemText) {
+            return selectData.items.find((x) => {
+                if (
+                    typeof x === 'object'
+                    && selectData.itemValue
+                    && selectData.itemText
+                ) {
+                    return x[selectData.itemValue] === props.item[props.field.key as string]
+                } else {
+                    return false
+                }
+            })
+        } else {
+            return selectData.items.find((x) => {
+                return x === props.item[props.field.key as string]
+            })
+        }
+    }
+    return undefined
+})
+
+function formatDate(val: unknown, format: string): string {
+    // Simple ISO date formatter fallback
+    if (!val) return ''
+    if (typeof val !== 'string' && typeof val !== 'number' && !(val instanceof Date)) {
+        return ''
+    }
+    const d = new Date(val)
+    if (isNaN(d.getTime())) return ''
+    // Only basic formatting for common cases
+    if (format === 'YYYY-MM-DD') {
+        return d.toISOString().slice(0, 10)
+    } else if (format === 'YYYY-MM-DD HH:mm:ss') {
+        return d.toISOString().replace('T', ' ').slice(0, 19)
+    } else if (format === 'HH:mm:ss') {
+        return d.toTimeString().slice(0, 8)
+    } else if (format === 'YYYY-MM') {
+        return d.toISOString().slice(0, 7)
+    } else if (format === 'YYYY') {
+        return d.getFullYear().toString()
+    }
+    return d.toISOString()
+}
+
+function formatNumber(number: string, separator: string) {
+    if (typeof number === 'undefined' || number === null) {
+        return '0'
+    }
+    if (!number || isNaN(parseInt(number))) {
+        return '0'
+    }
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, separator)
+}
+
+const formattedText = computed(() => {
+    let formatted = ''
+    const selectData = props.field.selectData
+    if (
+        selectData
+        && selectData.itemText
+        && !fieldSelectSelected.value
+        && props.item
+    ) {
+        const item_object = props.item[props.field.key as string]
+        if (item_object && typeof item_object === 'object') {
+            const item_object_object: Record<string, unknown> = item_object as Record<string, unknown>
+            formatted = item_object_object[selectData.itemText as string] as string
+        } else {
+            formatted = item_object as string
+        }
+    } else if (
+        fieldSelectSelected.value
+        && selectData
+        && selectData.itemText
+    ) {
+        formatted = fieldSelectSelected.value[selectData.itemText] as string
+    } else if (isDate.value) {
+        formatted
+            = props.item[props.field.key as string]
+                && formatDate(props.item[props.field.key as string], dateFormat.value)
+                ? formatDate(props.item[props.field.key as string], dateFormat.value)
+                : ''
+    } else {
+        formatted = props.item[props.field.key as string] as string
+    }
+
+    if (props.field.fieldData) {
+        if (props.field.fieldData.thousandSeparator) {
+            formatted = formatNumber(
+                formatted,
+                props.field.fieldData.thousandSeparator
+            )
+        }
+        if (props.field.fieldData.useDollarSign) {
+            formatted = `$${formatted}`
+        }
+    }
+    return formatted
+})
+
+function clickEvent() {
+    emit('click', props.item)
+}
 </script>

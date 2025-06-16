@@ -1,24 +1,27 @@
-import _vue from "vue"
-import Configuration from "./application/interface/configuration";
+import { App } from 'vue'
+import type Configuration from './application/interface/configuration'
 import VueExpertDatatable from './vue-expert-datatable.vue'
 import ClickOutside from './application/components/click-outside'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faEdit, faTrash, faTrashAlt, faPlus, faSave, faPen, faPenAlt } from '@fortawesome/free-solid-svg-icons'
 import { faTrashCan, faTrashAlt as faTrashRegular, faPlusSquare } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { ValidationProvider, ValidationObserver } from 'vee-validate'
+import { Form as ValidationProvider, Field as ValidationObserver } from 'vee-validate'
 import Validator from './application/utils/validator'
-import VTooltip from 'v-tooltip'
-import 'v-tooltip/dist/v-tooltip.css'
+import { VTooltip } from 'v-tooltip'
+import 'v-tooltip/dist/style.css'
 
-declare module 'vue/types/vue' {
-    interface Vue {
-        $expert_datatable_config: Configuration;
+// Declare module augmentation for Vue 3
+declare module '@vue/runtime-core' {
+    interface ComponentCustomProperties {
+        $expert_datatable_config: Configuration
     }
 }
+
+// Add icons to library
 library.add(faEdit, faTrash, faTrashAlt, faPlus, faTrashCan, faTrashRegular, faPlusSquare, faSave, faPen, faPenAlt)
 
-export function VueExpertDatatablePlugin(Vue: typeof _vue, options: Configuration | undefined = undefined): void {
+export function VueExpertDatatablePlugin(app: App, options: Configuration | undefined = undefined): void {
     if (!options) {
         options = {
             lang: 'EN',
@@ -32,14 +35,24 @@ export function VueExpertDatatablePlugin(Vue: typeof _vue, options: Configuratio
             options.theme = 'vue-expert-datatable'
         }
     }
-    Vue.prototype.$expert_datatable_config = options;
+
+    // Set configuration
+    app.config.globalProperties.$expert_datatable_config = options
+    
+    // Initialize validator
     Validator(options.lang)
-    Vue.component('vue-expert-datatable', VueExpertDatatable)
-    Vue.directive('click-outside', ClickOutside)
-    Vue.component('FontAwesomeIcon', FontAwesomeIcon)
-    Vue.component('ValidationProvider', ValidationProvider)
-    Vue.component('ValidationObserver', ValidationObserver)
-    Vue.use(VTooltip)
+
+    // Register components
+    app.component('vue-expert-datatable', VueExpertDatatable)
+    app.component('FontAwesomeIcon', FontAwesomeIcon)
+    app.component('ValidationProvider', ValidationProvider)
+    app.component('ValidationObserver', ValidationObserver)
+
+    // Register directives
+    app.directive('click-outside', ClickOutside)
+
+    // Use plugins
+    app.use(VTooltip)
 }
 
 export default VueExpertDatatablePlugin

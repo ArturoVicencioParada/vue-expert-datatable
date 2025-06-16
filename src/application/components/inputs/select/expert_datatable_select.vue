@@ -1,393 +1,250 @@
 <template>
-	<div class="expert-datatable-select-wrapper" ref="main_div">
-		<div
+    <div ref="mainDiv" class="expert-datatable-select-wrapper">
+        <div
+            v-click-outside="handleClickOutside"
             class="expert-datatable-select ant-input-affix-wrapper"
             :tabindex="tabIndex"
-			v-click-outside="clickOutside"
-			@focus="focusMainDiv"
+            @focus="handleFocus"
         >
-			<div class="selected-item-div" @click="openSelect">
-				<div class="selected-item" v-show="!open && selected_item">
-					<slot name="selected-item" v-bind:item="selected_item">
-						<span v-if="select_data.itemText && typeof selected_item === 'object'">{{ selected_item[select_data.itemText] }}</span>
-						<span v-else>{{ selected_item }}</span>
-					</slot>
-				</div>
-				<div class="select-placeholder" v-show="!open && !selected_item">
-					<slot name="placeholder" v-bind:item="selected_item">
-						{{ placeholder }}
-					</slot>
-				</div>
-				<input
-					v-show="open"
-					v-model="search"
-					:name="field.value"
-					type="text"
-					:placeholder="placeholder"
-					:key="inputKey"
-					class="expert-datatable-select-search-input"
-					v-bind="$attrs"
-					ref="input_search"
-				/>
-			</div>
+            <div class="selected-item-div" @click="() => openSelect()">
+                <div v-show="!isOpen && selectedItem" class="selected-item">
+                    <slot name="selected-item" :item="selectedItem">
+                        <span v-if="selectData.itemText && typeof selectedItem === 'object'">
+                            {{ (selectedItem as ItemGenericType)[selectData.itemText as keyof ItemGenericType] }}
+                        </span>
+                        <span v-else>{{ selectedItem }}</span>
+                    </slot>
+                </div>
+                <div v-show="!isOpen && !selectedItem" class="select-placeholder">
+                    <slot name="placeholder" :item="selectedItem">
+                        {{ placeholder }}
+                    </slot>
+                </div>
+                <input
+                    v-show="isOpen"
+                    :key="inputKey"
+                    v-bind="$attrs"
+                    ref="searchInput"
+                    v-model="searchText"
+                    :name="field.name"
+                    type="text"
+                    :placeholder="placeholder"
+                    class="expert-datatable-select-search-input"
+                />
+            </div>
             <span class="expert-datatable-select-suffix border-left pl-2">
                 
             </span>
             <div
                 class="expert-datatable-select-items at-bottom"
-                :class="{ 'show-select': open && filtered_items.length > 0 }"
+                :class="{ 'show-select': isOpen && filteredItems.length > 0 }"
             >
                 <div class="expert-datatable-select-list-items">
                     <div
-                        v-for="(item, index) in filtered_items"
-                        :key="key_item_list(item, index)"
+                        v-for="(item, index) in filteredItems"
+                        :key="getItemKey(item, index)"
                         class="expert-datatable-select-item"
-                        @click="clickItem(item)"
+                        @click="handleItemClick(item)"
                     >
-						<slot name="item-list" v-bind:item="item">
-							<span v-if="select_data.itemText">{{ item[select_data.itemText] }}</span>
-							<span v-else>{{ item }}</span>
+                        <slot name="item-list" :item="item">
+                            <span v-if="selectData.itemText">{{ item[selectData.itemText] }}</span>
+                            <span v-else>{{ item }}</span>
                         </slot>
                     </div>
                 </div>
             </div>
         </div>
-	</div>
+    </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import Field, { SelectData } from '@/application/interface/field'
-import Vue, { PropType } from 'vue'
 
-interface Data {
-	select_data: SelectData,
-	open: boolean,
-	search: string,
-	selected_item?: any
+interface Props {
+    field: Field<ItemGenericType>
+    modelValue: string | number | object | undefined
+    placeholder?: string
+    items?: ItemGenericType[]
+    itemText?: string
+    itemValue?: string
+    allowClear?: boolean
+    allowSearch?: boolean
+    tabIndex?: number
+    focusOnInit?: boolean
+    inputKey?: string
 }
 
-export default Vue.extend({
-	name: 'ExpertDatatableSelect',
-	props: {
-		field: {
-            type: Object as PropType<Field>,
-            required: true
-        },
-		value: {
-			type: [String, Number, Object],
-			default: ''
-		},
-		placeholder: {
-			type: String,
-			default: ''
-		},
-		items: {
-			type: Array,
-			default: null
-		},
-		itemText: {
-			type: String,
-			default: null
-		},
-		itemValue: {
-			type: String,
-			default: null
-		},
-		allowClear: {
-			type: Boolean,
-			default: null
-		},
-		allowSearch: {
-			type: Boolean,
-			default: null
-		},
-		tabIndex: {
-			type: Number,
-			default: 0
-		},
-		focusOnInit: {
-			type: Boolean,
-			default: false
-		},
-		inputKey: {
-			type: String,
-			default: 'key'
-		}
-	},
-	data() : Data {
-		return {
-			select_data: {},
-			open: false,
-			search: '',
-			selected_item: undefined
-		}
-	},
-	watch: {
-		'field.selectData':  {
-			handler (newVal: SelectData) : void {
-				this.initSelectData(newVal)
-			},
-			deep: true
-		},
-		open: function (val: any) {
-			this.$emit('open', val)
+const props = withDefaults(defineProps<Props>(), {
+    placeholder: '',
+    items: () => [],
+    itemText: undefined,
+    itemValue: undefined,
+    allowClear: true,
+    allowSearch: true,
+    tabIndex: 0,
+    focusOnInit: false,
+    inputKey: 'key'
+})
 
-			this.$nextTick(() => {
-				if (!val) {
-					this.$emit('blur')
-					this.$emit('deselect-row')
-				}
-			})
-		},
-		selected_item: function (val) {
-			this.$emit('selected-item', val)
-		},
-		selected_value: function (val) {
-			this.$emit('input', val)
-			this.$emit('change', val)
-		},
-		value: function (val: any) {
-			this.changeValue(val)
-		}
-	},
-	computed: {
-		filtered_items () : Array<any> {
-			if (this.select_data.items) {
-				if (this.search) {
-					if (this.select_data.itemText && this.select_data.itemValue) {
-						const filtered = this.select_data.items.filter((x: any) => {
-							let text = this.select_data.itemText ? x[this.select_data.itemText] : ''
-							let value = this.select_data.itemValue ? x[this.select_data.itemValue] : ''
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string | number | object | undefined): void
+    (e: 'change', value: string | number | object | undefined): void
+    (e: 'focus'): void
+    (e: 'blur'): void
+    (e: 'open', value: boolean): void
+    (e: 'selected-item', item: ItemGenericType): void
+    (e: 'deselect-row'): void
+}>()
 
-							if (typeof text === 'number') {
-								text = text.toString()
-							}
-							if (typeof value === 'number') {
-								value = value.toString()
-							}
-							if (typeof text === 'string' && typeof value === 'string') {
-								return text.toLowerCase().includes(this.search.toLowerCase())
-							}
-							return false
-						})
-						if (
-							filtered.length === 1 &&
-							this.selected_value
-						) {
-							if (this.select_data.itemValue && this.selected_value === filtered[0][this.select_data.itemValue]) {
-								return this.select_data.items
-							} else if (this.selected_value === filtered[0]) {
-								return this.select_data.items
-							}
-						}
-						return filtered
-					} else if (this.select_data.itemText) {
-						const filtered = this.select_data.items.filter((x: any) => {
-							let text = this.select_data.itemText ? x[this.select_data.itemText] : ''
-							if (typeof text === 'number') {
-								text = text.toString()
-							}
-							if (typeof text === 'string') {
-								return text.toLowerCase().includes(this.search.toLowerCase())
-							}
-							return false
-						})
-						if (
-							filtered.length === 1 &&
-							this.selected_value
-						) {
-							if (this.select_data.itemValue && this.selected_value === filtered[0][this.select_data.itemValue]) {
-								return this.select_data.items
-							} else if (this.selected_value === filtered[0]) {
-								return this.select_data.items
-							}
-						}
-						return filtered
-					} else if (this.select_data.itemValue) {
-						const filtered = this.select_data.items.filter((x: any) => {
-							let value = this.select_data.itemValue ? x[this.select_data.itemValue] : ''
-							if (typeof value === 'number') {
-								value = value.toString()
-							}
-							if (typeof value === 'string') {
-								return value.toLowerCase().includes(this.search.toLowerCase())
-							}
-							return false
-						})
-						if (
-							filtered.length === 1 &&
-							this.selected_value
-						) {
-							if (this.select_data.itemValue && this.selected_value === filtered[0][this.select_data.itemValue]) {
-								return this.select_data.items
-							} else if (this.selected_value === filtered[0]) {
-								return this.select_data.items
-							}
-						}
-						return filtered
-					} else {
-						const filtered = this.select_data.items.filter((x: any) => {
-							if (typeof x === 'string') {
-								return x.toLowerCase().includes(this.search.toLowerCase())
-							}
-							if (typeof x === 'number') {
-								return x.toString().toLowerCase().includes(this.search.toLowerCase())
-							}
-						})
-						if (
-							filtered.length === 1 &&
-							this.selected_value
-						) {
-							if (this.select_data.itemValue && this.selected_value === filtered[0][this.select_data.itemValue]) {
-								return this.select_data.items
-							} else if (this.selected_value === filtered[0]) {
-								return this.select_data.items
-							}
-						}
-						return filtered
-					}
-				} else {
-					return this.select_data.items
-				}
-			}
-			return []
-		},
-		selected_value () : any {
-			if (this.selected_item) {
-				if (this.select_data.itemValue) {
-					return this.selected_item[this.select_data.itemValue]
-				}
-				return this.selected_item
-			}
-			return null
-		}
-	},
-	created () {
-		if (this.field.selectData) {
-			this.initSelectData(this.field.selectData)
-		} else {
-			this.initSelectData()
-		}
-	},
-	mounted () {
-		this.$nextTick(() => {
-			if (this.focusOnInit) {
-				this.openSelect(true)
-			}
-			this.changeValue(this.value)
-		})
-	},
-	destroyed () {
-		document.body.removeEventListener('click', this.clickOutside)
-	},
-	methods: {
-		initSelectData (select_data: SelectData | undefined = undefined) {
-			if (select_data) {
-				this.select_data = select_data
-				if (!this.select_data.items) {
-					this.select_data.items = []
-				}
-				if (!this.select_data.allowClear) {
-					this.select_data.allowClear = true
-				}
-				if (!this.select_data.allowSearch) {
-					this.select_data.allowSearch = true
-				}
-			} else {
-				this.select_data = {
-					items: this.items ? this.items : [],
-					itemText: this.itemText ? this.itemText : undefined,
-					itemValue: this.itemValue ? this.itemValue : undefined,
-					allowClear: this.allowClear ? this.allowClear : undefined,
-					allowSearch: this.allowSearch ? this.allowSearch : undefined
-				}
-			}
-		},
-        input (e: InputEvent) {
-			const target: any = e.target
-			this.$emit('input', target ? target.value : '')
-		},
-		openSelect (triggerFocus = false) {
-			this.open = true
-			this.$emit('focus')
+// Refs
+const mainDiv = ref<HTMLElement | null>(null)
+const searchInput = ref<HTMLInputElement | null>(null)
+const isOpen = ref(false)
+const searchText = ref('')
+const selectedItem = ref<ItemGenericType | undefined>(undefined)
 
-			if (triggerFocus) {
-				this.$nextTick(() => {
-					const input: any = this.$refs.input_search
-					if (input) {
-						input.focus()
-						if (input.setSelectionRange) {
-							input.setSelectionRange(0, input.value.length)
-						}
-					}
-				})
-			}
-		},
-		event_key_down (e: any) {
-			this.$emit('keydown', e)
-		},
-		clickItem (item: any) {
-			this.selected_item = item
-			this.$emit('input', this.selected_value)
-			this.$emit('change', this.selected_value)
-			this.$nextTick(() => {
-				this.open = false
-				this.search = ''
-			})
-		},
-		key_item_list (item: any, index: number) {
-			if (this.select_data.itemValue) {
-				return `item_${item[this.select_data.itemValue]}`
-			} else {
-				if (typeof item !== 'number' && typeof item !== 'string') {
-					return `item_${item}`
-				} else {
-					return `item_${index}`
-				}
-			}
-		},
-		changeValue (val: any) {
-			if (val) {
-				if (this.select_data.items) {
-					if (this.select_data.itemValue) {
-						this.selected_item = this.select_data.items.find(x => {
-							if (this.select_data.itemValue) {
-								return x[this.select_data.itemValue] === val
-							} else {
-								return false
-							}
-						})
-						if (this.select_data.itemText && this.selected_item) {
-							this.search = this.selected_item[this.select_data.itemText]
-						} else {
-							this.search = this.selected_item
-						}
-					} else {
-						this.selected_item = this.select_data.items.find(x => {
-							return x === val
-						})
-						if (this.select_data.itemText && this.selected_item) {
-							this.search = this.selected_item[this.select_data.itemText]
-						} else {
-							this.search = this.selected_item
-						}
-					}
-				} else {
-					this.selected_item = undefined
-					this.search = ''
-				}
-			} else {
-				this.selected_item = undefined
-				this.search = ''
-			}
-		},
-		clickOutside () {
-			this.open = false
-		},
-		focusMainDiv () {
-			this.openSelect(true)
-		}
-    },
+// Computed
+const selectData = computed<SelectData<ItemGenericType>>(() => {
+    if (props.field.selectData) {
+        return {
+            items: props.field.selectData.items || [],
+            itemText: props.field.selectData.itemText,
+            itemValue: props.field.selectData.itemValue,
+            allowClear: props.field.selectData.allowClear ?? true,
+            allowSearch: props.field.selectData.allowSearch ?? true
+        }
+    }
+    return {
+        items: props.items,
+        itemText: props.itemText,
+        itemValue: props.itemValue,
+        allowClear: props.allowClear,
+        allowSearch: props.allowSearch
+    }
+})
+
+const filteredItems = computed<ItemGenericType[]>(() => {
+    if (!selectData.value.items) return []
+
+    if (!searchText.value) return selectData.value.items
+
+    return selectData.value.items.filter((item) => {
+        if (selectData.value.itemText && selectData.value.itemValue) {
+            const text = selectData.value.itemText ? String(item[selectData.value.itemText] || '') : ''
+            const value = selectData.value.itemValue ? String(item[selectData.value.itemValue] || '') : ''
+            return text.toLowerCase().includes(searchText.value.toLowerCase())
+                || value.toLowerCase().includes(searchText.value.toLowerCase())
+        } else if (selectData.value.itemText) {
+            const text = String(item[selectData.value.itemText] || '')
+            return text.toLowerCase().includes(searchText.value.toLowerCase())
+        } else if (selectData.value.itemValue) {
+            const value = String(item[selectData.value.itemValue] || '')
+            return value.toLowerCase().includes(searchText.value.toLowerCase())
+        } else {
+            const value = String(item)
+            return value.toLowerCase().includes(searchText.value.toLowerCase())
+        }
+    })
+})
+
+// Methods
+const getItemKey = (item: ItemGenericType, index: number): string => {
+    if (selectData.value.itemValue) {
+        return `item_${item[selectData.value.itemValue]}`
+    }
+    return typeof item === 'object' ? `item_${index}` : `item_${item}`
+}
+
+const handleItemClick = (item: ItemGenericType) => {
+    selectedItem.value = item
+    const value = selectData.value.itemValue ? item[selectData.value.itemValue] : item
+    emit('update:modelValue', value as string | number | object | undefined)
+    emit('change', value as string | number | object | undefined)
+    emit('selected-item', item)
+	
+    nextTick(() => {
+        isOpen.value = false
+        searchText.value = ''
+    })
+}
+
+const openSelect = (triggerFocus = false) => {
+    isOpen.value = true
+    emit('focus')
+    emit('open', true)
+
+    if (triggerFocus) {
+        nextTick(() => {
+            if (searchInput.value) {
+                searchInput.value.focus()
+                if (searchInput.value.setSelectionRange) {
+                    searchInput.value.setSelectionRange(0, searchInput.value.value.length)
+                }
+            }
+        })
+    }
+}
+
+const handleClickOutside = () => {
+    isOpen.value = false
+    emit('open', false)
+    emit('blur')
+    emit('deselect-row')
+}
+
+const handleFocus = () => {
+    openSelect(true)
+}
+
+// Watch for model value changes
+watch(() => props.modelValue, (newValue) => {
+    if (!newValue) {
+        selectedItem.value = undefined
+        searchText.value = ''
+        return
+    }
+
+    if (selectData.value.items) {
+        if (selectData.value.itemValue) {
+            selectedItem.value = selectData.value.items.find((item) => item[selectData.value.itemValue!] === newValue)
+        } else {
+            selectedItem.value = selectData.value.items.find((item) => item === newValue)
+        }
+
+        if (selectedItem.value) {
+            searchText.value = selectData.value.itemText 
+                ? selectedItem.value[selectData.value.itemText]
+                : String(selectedItem.value)
+        }
+    }
+}, { immediate: true })
+
+// Watch for field.selectData changes
+watch(() => props.field.selectData, (newValue: SelectData<ItemGenericType> | undefined) => {
+    if (newValue) {
+        // Re-initialize select data
+        selectedItem.value = undefined
+        searchText.value = ''
+        if (props.modelValue) {
+            // Re-select current value with new data
+            const value = props.modelValue
+            if (newValue.items) {
+                if (newValue.itemValue) {
+                    selectedItem.value = newValue.items.find((item) => item[newValue.itemValue!] === value)
+                } else {
+                    selectedItem.value = newValue.items.find((item) => item === value)
+                }
+            }
+        }
+    }
+}, { deep: true })
+
+// Initialize on mount
+onMounted(() => {
+    if (props.focusOnInit) {
+        openSelect(true)
+    }
 })
 </script>
 

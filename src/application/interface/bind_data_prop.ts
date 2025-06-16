@@ -1,9 +1,9 @@
-export default interface BindDataProp {
-	top_header: any;
-	header: any;
-	header_row: any;
-	footer_row: any;
-	add_row: any;
-	row: (row: any, index: number) => any;
-	bottom_footer: any;
+export default interface BindDataProp<T = object> {
+	top_header?: object;
+	header?: object;
+	header_row?: object;
+	footer_row?: object;
+	add_row?: object;
+	row?: (row: T, index: number) => T;
+	bottom_footer?: object;
 }

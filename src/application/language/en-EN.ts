@@ -1,4 +1,4 @@
-import Language from "../interface/language";
+import Language from '../interface/language';
 
 const language: Language = {
     add_button_text: 'Add {table_name}',

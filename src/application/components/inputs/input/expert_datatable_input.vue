@@ -1,96 +1,87 @@
 <template>
-	<div class="expert-datatable-input-wrapper">
-		<input
-			class="expert-datatable-input datatable-field"
-			:placeholder="placeholder"
-			:value="value"
-			:name="field.value"
-			:key="inputKey"
-			@input="input"
-			@blur="event_blur"
-			@focus="event_focus"
-			@keydown="event_key_down"
-		/>
-	</div>
+    <div class="expert-datatable-input-wrapper">
+        <input
+            :key="inputKey"
+            class="expert-datatable-input datatable-field"
+            :placeholder="placeholder"
+            :value="modelValue"
+            :name="field.key"
+            :type="htmlType"
+            @input="handleInput"
+            @blur="handleBlur"
+            @focus="handleFocus"
+            @keydown="handleKeyDown"
+        />
+    </div>
 </template>
 
-<script lang="ts">
-import Field from '@/application/interface/field';
-import Vue, { PropType } from 'vue';
-import DataInterface from './data-interface'
+<script setup lang="ts" generic="ItemGenericType extends Record<string, unknown>">
+import { ref } from 'vue'
+import Field from '@/application/interface/field'
 
-export default /*#__PURE__*/Vue.extend({
-    name: 'ExpertDatatableInput',
-    data(): DataInterface {
-        return {
-            focused: false
-        }
-    },
-    props: {
-		field: {
-            type: Object as PropType<Field>,
-            required: true
-        },
-		value: {
-			type: [String, Number],
-			default: ''
-		},
-		placeholder: {
-			type: String,
-			default: ''
-		},
-        htmlType: {
-			type: String,
-            default: 'button',
-			validator (htmlType: string) {
-				const valids = ['button', 'submit']
-				return valids.includes(htmlType)
-			}
-        },
-		inputKey: {
-			type: String,
-			default: 'key'
-		}
-    },
-    methods: {
-        input (e: InputEvent) {
-			const target: any = e.target
-			this.$emit('input', target ? target.value : '')
-		},
-		event_focus (e: FocusEvent) {
-			this.$emit('focus', e)
-		},
-		event_blur (e: FocusEvent) {
-			this.$emit('blur', e)
-		},
-		event_key_down (e: any) {
-			this.$emit('keydown', e)
-		}
-    },
-});
+interface Props {
+    field: Field<ItemGenericType>
+    modelValue: string | number
+    placeholder?: string
+    htmlType?: 'button' | 'submit'
+    inputKey?: string
+}
+
+withDefaults(defineProps<Props>(), {
+    placeholder: '',
+    htmlType: 'button',
+    inputKey: 'key'
+})
+
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string): void
+    (e: 'focus', event: FocusEvent): void
+    (e: 'blur', event: FocusEvent): void
+    (e: 'keydown', event: KeyboardEvent): void
+}>()
+
+const focused = ref(false)
+
+const handleInput = (e: Event) => {
+    const target = e.target as HTMLInputElement
+    emit('update:modelValue', target ? target.value : '')
+}
+
+const handleFocus = (e: FocusEvent) => {
+    focused.value = true
+    emit('focus', e)
+}
+
+const handleBlur = (e: FocusEvent) => {
+    focused.value = false
+    emit('blur', e)
+}
+
+const handleKeyDown = (e: KeyboardEvent) => {
+    emit('keydown', e)
+}
 </script>
-
 
 <style lang="scss">
 .expert-datatable-input-wrapper {
 	box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    color: rgba(0, 0, 0, .65);
-    font-variant: tabular-nums;
-    line-height: 1.5;
-    list-style: none;
-    font-feature-settings: "tnum";
-    position: relative;
-    display: inline-block;
-    width: 100%;
-    text-align: start;
+	margin: 0;
+	padding: 0;
+	color: rgba(0, 0, 0, .65);
+	font-variant: tabular-nums;
+	line-height: 1.5;
+	list-style: none;
+	font-feature-settings: "tnum";
+	position: relative;
+	display: inline-block;
+	width: 100%;
+	text-align: start;
 
 	.expert-datatable-input {
 		width: 100%;
 		padding: 0;
 		background-color: transparent;
-    	color: rgba(0, 0, 0, 0.65);
+		color: rgba(0, 0, 0, 0.65);
 		outline: none!important;
 		border: none;
 	}

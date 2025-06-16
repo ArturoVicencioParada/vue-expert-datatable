@@ -1,4 +1,4 @@
-import Language from "../interface/language";
+import Language from '../interface/language';
 import enEN from './en-EN'
 import esEs from './es-ES'
 
@@ -7,7 +7,7 @@ const prepareText = (text: string, table_name: string) => {
 }
 
 export default (language: string, table_name: string) : Language => {
-    let lang: any = Object.assign({}, enEN)
+    let lang: Language = Object.assign({}, enEN)
     if (language === 'ES') {
         lang = Object.assign({}, esEs)
     }
@@ -16,7 +16,7 @@ export default (language: string, table_name: string) : Language => {
     }
     let aProperty: string;
     for (aProperty in lang) {
-        lang[aProperty] = prepareText(lang[aProperty], table_name)
+        lang[aProperty as keyof Language] = prepareText(lang[aProperty as keyof Language], table_name)
     }
     return lang as Language
 }

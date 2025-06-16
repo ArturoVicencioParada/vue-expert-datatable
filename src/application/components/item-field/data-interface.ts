@@ -1,4 +1,4 @@
-import Language from "@/application/interface/language";
+import Language from '@/application/interface/language';
 
 export default interface DataInterface {
     localValue: any,

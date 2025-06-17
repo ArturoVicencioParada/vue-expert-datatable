@@ -36,6 +36,7 @@ const fields = ref<Field<User>[]>([
         visible: true,
         editable: false,
         pronoun: 'el',
+        size: 0.4,
     },
     {
         title: 'Nombre',
@@ -48,6 +49,7 @@ const fields = ref<Field<User>[]>([
         rules: z.object({
             name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres')
         }),
+        size: 2,
     },
     {
         title: 'Email',
@@ -60,6 +62,7 @@ const fields = ref<Field<User>[]>([
         rules: z.object({
             email: z.string().email('Email inválido').min(1, 'El email es requerido')
         }),
+        size: 1.5,
     },
     {
         title: 'Rol',
@@ -83,11 +86,13 @@ const fields = ref<Field<User>[]>([
                     value: 'guest',
                     label: 'Invitado' 
                 },
-            ]
+            ],
+            itemText: 'label',
         },
         rules: z.object({
             role: z.string().min(1, 'El rol es requerido')
         }),
+        size: 2,
     },
     {
         title: 'Activo',
@@ -97,12 +102,14 @@ const fields = ref<Field<User>[]>([
         fieldType: 'checkbox',
         editable: true,
         pronoun: 'el',
+        size: 0.5,
     },
     {
         title: 'Acciones',
         align: 'center',
         key: 'actions',
         visible: true,
+        size: 0.5,
     },
 ]);
 
@@ -169,50 +176,6 @@ const defaultItem = ref<User>({
     role: 'user',
     active: true,
 });
-
-// Eventos
-const onDataUpdated = (data: any[]) => {
-    console.log('Datos actualizados:', data);
-};
-
-const onLoadData = () => {
-    console.log('Datos cargados');
-};
-
-const onError = (error: any) => {
-    console.error('Error:', error);
-};
-
-const onAlert = (alert: any) => {
-    console.log('Alerta:', alert);
-};
-
-const onEditItem = (item: any, index: number) => {
-    console.log('Editando item:', item, 'índice:', index);
-};
-
-const onDeleteItem = (item: any, index: number) => {
-    console.log('Eliminando item:', item, 'índice:', index);
-};
-
-const onItemInserted = (item: any) => {
-    console.log('Item insertado:', item);
-};
-
-const onItemAdded = (item: any) => {
-    console.log('Item añadido:', item);
-};
-
-const onItemUpdated = (item: any) => {
-    console.log('Item actualizado:', item);
-};
-
-const onItemAddChange = (newValue: any, oldValue: any) => {
-    console.log('Cambio en item de añadir:', {
-        newValue,
-        oldValue 
-    });
-};
 </script>
 
 <style scoped>

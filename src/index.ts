@@ -7,8 +7,8 @@ import { faEdit, faTrash, faTrashAlt, faPlus, faSave, faPen, faPenAlt } from '@f
 import { faTrashCan, faTrashAlt as faTrashRegular, faPlusSquare } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import Validator from './application/utils/validator'
-import { VTooltip } from 'v-tooltip'
-import 'v-tooltip/dist/style.css'
+import VueTippy from 'vue-tippy'
+import 'tippy.js/dist/tippy.css'
 
 // Declare module augmentation for Vue 3
 declare module '@vue/runtime-core' {
@@ -42,7 +42,7 @@ export function VueExpertDatatablePlugin(app: App, options: Configuration | unde
     Validator(options.lang)
 
     // Register components
-    app.component('vue-expert-datatable', VueExpertDatatable)
+    app.component('VueExpertDatatable', VueExpertDatatable)
     app.component('FontAwesomeIcon', FontAwesomeIcon)
     // app.component('ValidationProvider', ValidationProvider)
     // app.component('ValidationObserver', ValidationObserver)
@@ -51,7 +51,13 @@ export function VueExpertDatatablePlugin(app: App, options: Configuration | unde
     app.directive('click-outside', ClickOutside)
 
     // Use plugins
-    app.use(VTooltip)
+    app.use(
+        VueTippy,
+        {
+            directive: 'tooltip', // => v-tooltip
+            component: 'tooltip', // => <tippy/>
+        }
+    )
 }
 
 export default VueExpertDatatablePlugin

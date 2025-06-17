@@ -40,27 +40,32 @@ $font-size-large: 19px;
 	}
 
     .expert-datatable {
-        border-collapse: separate;
+        border-collapse: collapse;
         border-spacing: 0;
         width: 100%;
-        &> tbody,
-        &> thead {
-            &> tr,
-			&> td,
-            &> th {
-				padding: 4px 4px;
-            }
+        display: flex;
+        flex-direction: column;
 
-			&> tr,
-            &> td,
-            &> th,
-			input,
-			div,
-			span,
-			li,
-			p {
-				font-size: $font-size-normal;
-			}
+        .expert-row {
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        .expert-datatable-header {
+            display: flex;
+            font-size: $font-size-normal;
+            font-family: 'Roboto', sans-serif;
+            color: rgba(0, 0, 0, .85);
+            font-weight: 500;
+            text-align: left;
+            background: #fafafa;
+            border-bottom: 1px solid #e8e8e8;
+            transition: background .3s ease;
+        }
+        .expert-datatable-header-column {
+            flex: 1;
+			padding: 4px 11px;
         }
 		.icon-editing {
 			font-size: $font-size-normal;
@@ -141,41 +146,27 @@ $font-size-large: 19px;
 				font-size: $font-size-large;
 			}
         }
-        &> thead {
-            &> tr {
-                &> th {
-					font-family: 'Roboto', sans-serif;
-                    color: rgba(0, 0, 0, .85);
-                    font-weight: 500;
-                    text-align: left;
-                    background: #fafafa;
-                    border-bottom: 1px solid #e8e8e8;
-                    transition: background .3s ease;
-                }
-            }
-        }
 
 		&.bordered {
-			&> thead, &> tbody {
-				&> tr {
-					&> th {
-						border-top: $border;
-					}
-					&> td:first-child, &> th:first-child {
-						border-left: $border;
-						border-right: $border;
-					}
-					&> td:not(:first-child), &> th:not(:first-child) {
-						border-right: $border;
-					}
-					&> td {
-						border-bottom: $border;
-					}
-				}
-			}
+            &> .expert-row {
+                &> .expert-column, &> .expert-datatable-header-column {
+                    border-top: $border;
+                }
+                &> .expert-column:first-child, &> .expert-datatable-header-column:first-child {
+                    border-left: $border;
+                    border-right: $border;
+                }
+                &> .expert-column:not(:first-child), &> .expert-datatable-header-column:not(:first-child) {
+                    border-right: $border;
+                }
+                &> .expert-column {
+                    border-bottom: $border;
+                }
+            }
 		}
 
 		.expert-column {
+            flex: 1;
 			position: relative;
 			font-family: 'Roboto', sans-serif;
 			padding: 4px 11px;
@@ -187,7 +178,6 @@ $font-size-large: 19px;
 			.expert-item {
 				width: 100%;
 				min-height: 15px;
-				display: inline-block;
 			}
 
 			.focused {

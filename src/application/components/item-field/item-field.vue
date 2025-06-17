@@ -43,7 +43,6 @@
             :placeholder="inputPlaceholder(field)"
             :field="field"
             :input-name="field.key"
-            :focus-on-init="!isAdding"
             :input-key="`item_field_input_${index}_${field.key}`"
             @blur="eventBlur"
             @focus="eventFocus"

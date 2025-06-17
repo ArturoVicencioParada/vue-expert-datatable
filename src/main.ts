@@ -2,4 +2,11 @@ import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+import VueExpertDatatablePlugin from './index'
+
+const app = createApp(App)
+VueExpertDatatablePlugin(app, {
+    lang: 'ES',
+    theme: 'vue-expert-datatable'
+})
+app.mount('#app')

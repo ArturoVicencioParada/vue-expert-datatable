@@ -9,6 +9,7 @@
             <div class="selected-item-div" @click="() => openSelect()">
                 <div v-show="!isOpen && selectedItem" class="selected-item">
                     <slot name="selected-item" :item="selectedItem">
+                        {{ typeof selectedItem }}
                         <span v-if="selectData.itemText && typeof selectedItem === 'object'">
                             {{ (selectedItem as ItemGenericType)[selectData.itemText as keyof ItemGenericType] }}
                         </span>
@@ -110,7 +111,7 @@ const selectedItem = ref<ItemGenericType | undefined>(undefined)
 const selectData = computed<SelectData<SelectOptionType>>(() => {
     if (props.field.selectData) {
         return {
-            items: props.field.selectData.items || [],
+            items: (props.field.selectData.items || []) as SelectOptionType[],
             itemText: props.field.selectData.itemText,
             itemValue: props.field.selectData.itemValue,
             allowClear: props.field.selectData.allowClear ?? true,
@@ -172,6 +173,7 @@ const handleItemClick = (item: SelectOptionType) => {
 }
 
 const openSelect = (triggerFocus = false) => {
+    console.log('openSelect', triggerFocus)
     isOpen.value = true
     emit('focus')
     emit('open', true)
@@ -248,6 +250,7 @@ watch(() => props.field.selectData, (newValue: SelectData<SelectOption> | undefi
 
 // Initialize on mount
 onMounted(() => {
+    console.log('onMounted', props.focusOnInit)
     if (props.focusOnInit) {
         openSelect(true)
     }
@@ -256,8 +259,6 @@ onMounted(() => {
 
 <style lang="scss">
 .expert-datatable-select-wrapper {
-	display: inline-block;
-	width: 100%;
 	box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -267,14 +268,11 @@ onMounted(() => {
     line-height: 1.5;
     list-style: none;
     font-feature-settings: 'tnum';
-    position: relative;
-    display: inline-block;
-    width: 100%;
 
 	.expert-datatable-select {
-		display: inline-block;
-		width: 100%;
-		position: relative;
+        .selected-item-div {
+            position: relative;
+        }
 
 		.expert-datatable-select-suffix {
 			position: absolute;
@@ -288,7 +286,6 @@ onMounted(() => {
 		}
 
 		.expert-datatable-select-search-input {
-			width: 100%;
 			padding: 0;
 			background-color: transparent;
 			color: rgba(0, 0, 0, 0.65);
@@ -297,8 +294,6 @@ onMounted(() => {
 		}
 
 		.expert-datatable-select-items {
-			max-width: 100%;
-			width: 100%;
 			pointer-events: none;
 			visibility: hidden;
 			opacity: 0;
@@ -308,6 +303,9 @@ onMounted(() => {
 			transition: opacity .1s;
 			position: absolute;
 			z-index: 8;
+            left: 0;
+            right: 0;
+            top: 102%;
 			transform-origin: left top 0;
 			background-color: #fff;
 			border: 1px solid #ced4da;

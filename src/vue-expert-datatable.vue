@@ -169,6 +169,8 @@
                                                     :config="global_config"
                                                     @blur="event_blur"
                                                     @keydown="event_key_down"
+                                                    @move-to-other-field="moveToOtherField"
+                                                    v-on="event_listener_item(row as ItemGenericType, index, field)"
                                                 />
                                                 <ErrorMessage :name="field.key" />
                                             </VeeField>
@@ -370,6 +372,7 @@
                                     :config="global_config"
                                     @update:model-value="handleChange"
                                     v-on="event_listeners_input(undefined, undefined, field)"
+                                    @move-to-other-field="moveToOtherField"
                                 />
                                 <ErrorMessage :name="field.key" />
                             </slot>
@@ -402,6 +405,7 @@
                                     :config="global_config"
                                     @update:model-value="handleChange"
                                     v-on="event_listeners_input(undefined, undefined, field)"
+                                    @move-to-other-field="moveToOtherField"
                                 />
                                 <ErrorMessage :name="field.key" />
                             </slot>
@@ -1176,6 +1180,7 @@ const selectRow = (
     index: number | undefined = undefined,
     field: Field<ItemGenericType>
 ) => {
+    console.log('selectRow', row, index, field);
     if (!row) {
         return;
     }
@@ -1192,6 +1197,46 @@ const selectRow = (
     });
 };
 
+const moveToOtherField = (direction: 'left' | 'right' | 'up' | 'down') => {
+    console.log('moveToOtherField', direction, selected_field.value, selected_row.value);
+    const index = selected_index.value || 0;
+
+    if (direction === 'left' || direction === 'right') {
+        const editable_fields = props.fields.filter((field) => field.editable);
+        const selected_field_index = editable_fields.findIndex((field) => field.key === selected_field.value?.key);
+        if (direction === 'left') {
+            if (selected_field_index > 0) {
+                console.log('moveToOtherField left', selected_field_index, editable_fields[selected_field_index - 1]);
+                selectRow(selected_row.value, index, editable_fields[selected_field_index - 1]);
+            }
+        }
+        if (direction === 'right') {
+            if (selected_field_index < props.fields.length - 1) {
+                console.log('moveToOtherField right', selected_field_index, editable_fields[selected_field_index + 1]);
+                selectRow(selected_row.value, index, editable_fields[selected_field_index + 1]);
+            }
+        }
+    }
+    if (direction === 'up' || direction === 'down') {
+        const editable_rows = table_data.value.filter((row) => selected_field.value && is_editable(selected_field.value, row));
+        const selected_row_index = editable_rows
+            .findIndex((row) => row[props.keyName as keyof ItemGenericType] === selected_row.value?.[props.keyName as keyof ItemGenericType]);
+
+        if (direction === 'up') {
+            if (selected_row_index > 0 && selected_field.value) {
+                console.log('moveToOtherField up', selected_row_index, selected_field.value);
+                selectRow(editable_rows[selected_row_index - 1], index - 1, selected_field.value);
+            }
+        }
+        if (direction === 'down' && selected_field.value) {
+            const editable_rows = table_data.value.filter((row) => selected_field.value && is_editable(selected_field.value, row));
+            if (selected_row_index < table_data.value.length - 1) {
+                console.log('moveToOtherField down', selected_row_index, selected_field.value);
+                selectRow(editable_rows[selected_row_index + 1], index + 1, selected_field.value);
+            }
+        }
+    }
+};
 const copyItem = (item: ItemGenericType | undefined) => {
     if (!item) {
         return;
@@ -1215,13 +1260,20 @@ const deSelectRow = () => {
         });
     });
 };
-const dynamicRefs = useTemplateRef<{ focus: () => void }[]>('item_field');
+interface ItemFieldRef {
+    focus: () => void;
+    field: Field<ItemGenericType>;
+    index: number;
+}
+const dynamicRefs = useTemplateRef<ItemFieldRef[]>('item_field');
 
 const focusSelectedInput = (field: Field<ItemGenericType>, index: number | undefined = undefined) => {
     nextTick(() => {
         if (field && (index || index === 0)) {
             if (dynamicRefs) {
-                dynamicRefs.value?.[0]?.focus();
+                const element = dynamicRefs.value?.find((ref) => ref.field.key === field.key && ref.index === index);
+                console.log('focusSelectedInput test', element, index);
+                element?.focus();
             }
         }
     });

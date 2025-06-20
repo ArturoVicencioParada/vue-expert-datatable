@@ -15,7 +15,7 @@
             :readonly="readOnly"
             autocomplete="off"
             @input="handleInput"
-            @focus="focus"
+            @focus="handleFocus"
             @blur="handleBlur"
             @keydown="keyDown"
         />
@@ -139,13 +139,21 @@ const handleBlur = () => {
 }
 
 // Handle focus event
-const focus = () => {
+const handleFocus = () => {
     emit('focus')
 }
 
 // Handle keydown event
 const keyDown = (event: KeyboardEvent) => {
     emit('keydown', event)
+}
+
+const focus = () => {
+    const input = inputRef.value as unknown as HTMLInputElement;
+    if (input) {
+        input.focus();
+        input.select();
+    }
 }
 
 // Computed property for input classes
@@ -166,6 +174,10 @@ onMounted(() => {
     if (typeof props.modelValue === 'number') {
         rawValue.value = formatNumber(props.modelValue)
     }
+})
+
+defineExpose({
+    focus
 })
 </script>
 

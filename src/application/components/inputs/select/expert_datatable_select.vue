@@ -248,12 +248,20 @@ watch(() => props.field.selectData, (newValue: SelectData<SelectOption> | undefi
     }
 }, { deep: true })
 
+const focus = () => {
+    openSelect(true)
+}
+
 // Initialize on mount
 onMounted(() => {
     console.log('onMounted', props.focusOnInit)
     if (props.focusOnInit) {
         openSelect(true)
     }
+})
+
+defineExpose({
+    focus
 })
 </script>
 

@@ -1,12 +1,12 @@
 <template>
     <div class="expert-datatable-input-wrapper">
         <input
+            :key="inputKey"
+            ref="inputRef"
             class="expert-datatable-input datatable-field"
             :placeholder="placeholder"
             :value="modelValue"
-            :name="field.value"
-            :key="inputKey"
-            ref="inputRef"
+            :name="field.key"
             @input="handleInput"
             @blur="handleBlur"
             @focus="handleFocus"
@@ -101,6 +101,14 @@ const handleKeyDown = (e: KeyboardEvent) => {
     emit('keydown', e)
 }
 
+const focus = () => {
+    const input = inputRef.value as unknown as HTMLInputElement;
+    if (input) {
+        input.focus();
+        input.select();
+    }
+}
+
 // Setup input validation on mount
 onMounted(() => {
     if (inputRef.value) {
@@ -115,7 +123,7 @@ onMounted(() => {
             'drop'
         ]
 
-        events.forEach(event => {
+        events.forEach((event) => {
             inputRef.value?.addEventListener(event, (e: Event) => {
                 const target = e.target as HTMLInputElement
                 if (!validateInput(target.value)) {
@@ -139,6 +147,10 @@ watch(() => props.modelValue, (newValue) => {
     if (inputRef.value && typeof newValue === 'number') {
         inputRef.value.value = newValue.toString()
     }
+})
+
+defineExpose({
+    focus
 })
 </script>
 

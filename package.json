@@ -16,6 +16,8 @@
   "sideEffects": false,
   "scripts": {
     "dev": "vite",
+    "start": "yarm run dev",
+    "serve": "yarm run dev",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint": "npx eslint --ext .js,.ts,.vue src/",

@@ -18,6 +18,7 @@
 <script setup lang="ts" generic="ItemGenericType = BaseEntity">
 import { ref, watch } from 'vue'
 import Field, { BaseEntity } from '@/application/interface/field'
+import { nextTick } from 'process';
 const inputRef = ref(null);
 
 interface Props {
@@ -73,8 +74,13 @@ const handleKeyDown = (e: KeyboardEvent) => {
 }
 
 const focus = () => {
-    console.log('focus expert-datatable-input', inputRef.value);
-    inputRef.value?.focus();
+    const input = inputRef.value as unknown as HTMLInputElement;
+    if (input) {
+        input.focus();
+        nextTick(() => {
+            input.setSelectionRange(input.value.length, input.value.length);
+        });
+    }
 }
 
 defineExpose({

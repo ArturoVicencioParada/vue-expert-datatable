@@ -107,6 +107,7 @@ const emit = defineEmits<{
     (e: 'blur'): void;
     (e: 'keydown', event: KeyboardEvent): void;
     (e: 'deselect-row'): void;
+    (e: 'move-to-other-field', direction: 'left' | 'right' | 'up' | 'down'): void;
 }>();
 
 // State
@@ -136,8 +137,48 @@ const eventBlur = () => {
     });
 };
 
+const cursorPosition = ref<number>(0);
 const eventKeyDown = (e: KeyboardEvent) => {
+    console.log('event key down field', e);
     emit('keydown', e);
+    const keys = [
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown'
+    ];
+    if (keys.includes(e.key)) {
+        const posicionCursor = (e.target as HTMLInputElement)?.selectionStart;
+        const valueLength = getLocalValueLength()
+        console.log('Posición del cursor:', posicionCursor);
+        cursorPosition.value = posicionCursor || 0;
+        if (e.key === 'ArrowLeft' && cursorPosition.value === 0) {
+            emit('move-to-other-field', 'left');
+        }
+        if (e.key === 'ArrowRight' && cursorPosition.value === valueLength) {
+            emit('move-to-other-field', 'right');
+        }
+        if (e.key === 'ArrowUp') {
+            emit('move-to-other-field', 'up');
+        }
+        if (e.key === 'ArrowDown') { 
+            emit('move-to-other-field', 'down');
+        }
+    }
+};
+
+const getLocalValueLength = (): number => {
+    const value = localValue.value;
+    if (typeof value === 'string') {
+        return value.length;
+    }
+    if (typeof value === 'number') {
+        return value.toString().length;
+    }
+    if (Array.isArray(value)) {
+        return value.length;
+    }
+    return 0;
 };
 
 const deselectRow = () => {
@@ -179,7 +220,9 @@ onMounted(() => {
 });
 
 defineExpose({
-    focus
+    focus,
+    field: props.field,
+    index: props.index
 })
 </script>
 

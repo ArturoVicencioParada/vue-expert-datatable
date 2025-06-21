@@ -60,6 +60,12 @@
                         v-for="field in final_fields.filter((x) => x.visible === true)"
                         :key="`record_${index}_${table_identifier}_${field.key}`"
                         class="expert-column"
+                        :class="{
+                            selectable: field.fieldType !== undefined
+                                && is_editable(field, row as ItemGenericType),
+                            selected: is_selected_item(index, field)
+                                && is_editable(field, row as ItemGenericType),
+                        }"
                         :style="{ flex: field.size }"
                     >
                         <VeeForm
@@ -183,15 +189,6 @@
                                             />
                                         </template>
                                     </slot>
-                                    <div
-                                        v-if="
-                                            show_editing_icon_validate(row as ItemGenericType, index, field) &&
-                                                is_editable(field, row as ItemGenericType)
-                                        "
-                                        class="icon-editing"
-                                    >
-                                        <font-awesome-icon icon="pen-alt" />...
-                                    </div>
                                 </div>
 
                                 <div v-else>
@@ -728,7 +725,7 @@ const initHttpClient = (): void => {
 };
 
 const initData = (): void => {
-    if (props.logging) console.log('Init table', props.tableName);
+    if (props.logging) console.info('Init table', props.tableName);
     if (props.lang) {
         current_language.value = initLanguage(props.lang, props.tableName);
     } else {
@@ -788,11 +785,11 @@ const saveTableData = async (is_adding = false) => {
             const formName = is_adding
                 ? 'form_add_item'
                 : `form_edit_item_${selected_index.value}_${selected_field.value?.key}`;
-            if (props.logging) console.log('formName', formName);
+            if (props.logging) console.info('formName', formName);
             let form = ref<unknown>(formName);
             if (form.value) {
                 const validate = true;
-                if (props.logging) console.log('validate', validate);
+                if (props.logging) console.info('validate', validate);
                 if (validate) {
                     if (is_adding) {
                         if (isWithApi.value) {
@@ -1042,7 +1039,7 @@ const saveTableData = async (is_adding = false) => {
                                 throw new Exception('you haven\'t provided an update method');
                             }
                         } else {
-                            if (props.logging) console.log('EDIT', clone(selected_row.value));
+                            if (props.logging) console.info('EDIT', clone(selected_row.value));
                             const selected_row_copy = clone(selected_row.value);
                             if (props.customEvents.before_edit) {
                                 Promise.resolve(
@@ -1113,7 +1110,7 @@ const saveTableData = async (is_adding = false) => {
                     }
                 } else {
                     let error_message = current_language.value?.fill_required_fields || '';
-                    if (props.logging) console.log('is_adding', is_adding);
+                    if (props.logging) console.info('is_adding', is_adding);
                     if (!is_adding) {
                         cancel_editing();
                     }
@@ -1122,7 +1119,7 @@ const saveTableData = async (is_adding = false) => {
             }
         } catch (error) {
             if (error instanceof Exception) {
-                if (props.logging) console.log('ERROR', error.message, error.stack);
+                if (props.logging) console.info('ERROR', error.message, error.stack);
                 showAlert({
                     type: 'error',
                     message: error.message,
@@ -1180,7 +1177,7 @@ const selectRow = (
     index: number | undefined = undefined,
     field: Field<ItemGenericType>
 ) => {
-    console.log('selectRow', row, index, field);
+    // console.log('selectRow', row, index, field);
     if (!row) {
         return;
     }
@@ -1198,7 +1195,6 @@ const selectRow = (
 };
 
 const moveToOtherField = (direction: 'left' | 'right' | 'up' | 'down') => {
-    console.log('moveToOtherField', direction, selected_field.value, selected_row.value);
     const index = selected_index.value || 0;
 
     if (direction === 'left' || direction === 'right') {
@@ -1206,13 +1202,13 @@ const moveToOtherField = (direction: 'left' | 'right' | 'up' | 'down') => {
         const selected_field_index = editable_fields.findIndex((field) => field.key === selected_field.value?.key);
         if (direction === 'left') {
             if (selected_field_index > 0) {
-                console.log('moveToOtherField left', selected_field_index, editable_fields[selected_field_index - 1]);
+                // console.log('moveToOtherField left', selected_field_index, editable_fields[selected_field_index - 1]);
                 selectRow(selected_row.value, index, editable_fields[selected_field_index - 1]);
             }
         }
         if (direction === 'right') {
             if (selected_field_index < props.fields.length - 1) {
-                console.log('moveToOtherField right', selected_field_index, editable_fields[selected_field_index + 1]);
+                // console.log('moveToOtherField right', selected_field_index, editable_fields[selected_field_index + 1]);
                 selectRow(selected_row.value, index, editable_fields[selected_field_index + 1]);
             }
         }
@@ -1224,14 +1220,14 @@ const moveToOtherField = (direction: 'left' | 'right' | 'up' | 'down') => {
 
         if (direction === 'up') {
             if (selected_row_index > 0 && selected_field.value) {
-                console.log('moveToOtherField up', selected_row_index, selected_field.value);
+                // console.log('moveToOtherField up', selected_row_index, selected_field.value);
                 selectRow(editable_rows[selected_row_index - 1], index - 1, selected_field.value);
             }
         }
         if (direction === 'down' && selected_field.value) {
             const editable_rows = table_data.value.filter((row) => selected_field.value && is_editable(selected_field.value, row));
             if (selected_row_index < table_data.value.length - 1) {
-                console.log('moveToOtherField down', selected_row_index, selected_field.value);
+                // console.log('moveToOtherField down', selected_row_index, selected_field.value);
                 selectRow(editable_rows[selected_row_index + 1], index + 1, selected_field.value);
             }
         }
@@ -1272,7 +1268,7 @@ const focusSelectedInput = (field: Field<ItemGenericType>, index: number | undef
         if (field && (index || index === 0)) {
             if (dynamicRefs) {
                 const element = dynamicRefs.value?.find((ref) => ref.field.key === field.key && ref.index === index);
-                console.log('focusSelectedInput test', element, index);
+                // console.log('focusSelectedInput test', element, index);
                 element?.focus();
             }
         }
@@ -1291,26 +1287,26 @@ const cancel_editing = async () => {
     is_canceling.value = true;
     if (adding_row_selected.value) {
         if (props.logging)
-            console.log('cancel adding before', {
+            console.info('cancel adding before', {
                 selected_row: clone(selected_row.value),
                 selected_row_before: clone(selected_row_before.value),
             });
 
         copyObject(item_record.value, item_record_default.value);
         if (props.logging)
-            console.log('cancel adding after', {
+            console.info('cancel adding after', {
                 selected_row: clone(selected_row.value),
                 selected_row_before: clone(selected_row_before.value),
             });
     } else {
         if (props.logging)
-            console.log('cancel editing before', {
+            console.info('cancel editing before', {
                 selected_row: selected_row.value,
                 selected_row_before: selected_row_before.value,
             });
         copyObject(selected_row.value, selected_row_before.value);
         if (props.logging)
-            console.log('cancel editing after', {
+            console.info('cancel editing after', {
                 selected_row: clone(selected_row.value),
                 selected_row_before: clone(selected_row_before.value),
             });
@@ -1319,15 +1315,15 @@ const cancel_editing = async () => {
 };
 
 const event_input = (e: unknown) => {
-    if (props.logging) console.log('EVENT INPUT VED', e);
+    if (props.logging) console.info('EVENT INPUT VED', e);
     if (selected_field.value?.key) {
-        if (props.logging) console.log('EVENT INPUT VED', e);
+        if (props.logging) console.info('EVENT INPUT VED', e);
         const name = selected_field.value.key;
         const is_adding = selected_index.value === undefined;
         if (name) {
             let inputValue = '';
             inputValue = e as string;
-            if (props.logging) console.log('inputValue', inputValue);
+            if (props.logging) console.info('inputValue', inputValue);
             if (selected_row.value && !is_adding) {
                 selected_row.value[name] = inputValue;
             } else if (is_adding && item_record.value && adding_row_selected.value) {
@@ -1507,7 +1503,7 @@ const hasScopedSlotStartsWith = (name: string) => {
 
 const copyObject = (target: ItemGenericType, source: ItemGenericType): ItemGenericType => {
     const targetCopy: ItemGenericType = Object.assign({}, source);
-    if (props.logging) console.log('copy object source', source);
+    if (props.logging) console.info('copy object source', source);
     for (const prop in source) {
         if (typeof target[prop] !== 'undefined') {
             if (Array.isArray(source[prop])) {
@@ -1521,7 +1517,7 @@ const copyObject = (target: ItemGenericType, source: ItemGenericType): ItemGener
             }
         }
     }
-    if (props.logging) console.log('copy object final', targetCopy);
+    if (props.logging) console.info('copy object final', targetCopy);
     Object.assign(target as object, targetCopy);
     return clone(target as object) as ItemGenericType;
 };

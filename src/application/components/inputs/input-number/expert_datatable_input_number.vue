@@ -96,7 +96,6 @@ const handleBlur = (e: FocusEvent) => {
     emit('blur', e)
 }
 
-// Handle keydown event
 const handleKeyDown = (e: KeyboardEvent) => {
     emit('keydown', e)
 }

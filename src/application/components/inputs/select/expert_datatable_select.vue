@@ -31,6 +31,7 @@
                     type="text"
                     :placeholder="placeholder"
                     class="expert-datatable-select-search-input"
+                    @keydown="handleKeyDown"
                 />
             </div>
             <span class="expert-datatable-select-suffix border-left pl-2">
@@ -98,6 +99,7 @@ const emit = defineEmits<{
     (e: 'open', value: boolean): void
     (e: 'selected-item', item: SelectOptionType): void
     (e: 'deselect-row'): void
+    (e: 'keydown', event: KeyboardEvent): void
 }>()
 
 // Refs
@@ -162,6 +164,7 @@ const getItemKey = (item: SelectOptionType, index: number): string => {
 const handleItemClick = (item: SelectOptionType) => {
     selectedItem.value = item
     const value = selectData.value.itemValue ? item[selectData.value.itemValue as keyof SelectOptionType] : item
+    console.log('handleItemClick', item, value)
     emit('update:modelValue', value as string | number | object | undefined)
     emit('change', value as string | number | object | undefined)
     emit('selected-item', item)
@@ -173,7 +176,6 @@ const handleItemClick = (item: SelectOptionType) => {
 }
 
 const openSelect = (triggerFocus = false) => {
-    console.log('openSelect', triggerFocus)
     isOpen.value = true
     emit('focus')
     emit('open', true)
@@ -199,6 +201,10 @@ const handleClickOutside = () => {
 
 const handleFocus = () => {
     openSelect(true)
+}
+
+const handleKeyDown = (e: KeyboardEvent) => {
+    emit('keydown', e)
 }
 
 // Watch for model value changes
@@ -254,7 +260,6 @@ const focus = () => {
 
 // Initialize on mount
 onMounted(() => {
-    console.log('onMounted', props.focusOnInit)
     if (props.focusOnInit) {
         openSelect(true)
     }

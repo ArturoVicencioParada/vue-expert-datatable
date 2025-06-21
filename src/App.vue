@@ -88,6 +88,7 @@ const fields = ref<Field<User>[]>([
                 },
             ],
             itemText: 'label',
+            itemValue: 'value',
         },
         rules: z.object({
             role: z.string().min(1, 'El rol es requerido')

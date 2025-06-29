@@ -9,7 +9,6 @@
             <div class="selected-item-div" @click="() => openSelect()">
                 <div v-show="!isOpen && selectedItem" class="selected-item">
                     <slot name="selected-item" :item="selectedItem">
-                        {{ typeof selectedItem }}
                         <span v-if="selectData.itemText && typeof selectedItem === 'object'">
                             {{ (selectedItem as ItemGenericType)[selectData.itemText as keyof ItemGenericType] }}
                         </span>

@@ -9,6 +9,13 @@ $font-size-small: 13px;
 $font-size-normal: 15px;
 $font-size-large: 19px;
 
+:where([class^="expert-datatable"]) [class^="expert-datatable"],
+:where([class*=" expert-datatable"]) [class^="expert-datatable"],
+:where([class^="expert-datatable"]) [class*=" expert-datatable"],
+:where([class*=" expert-datatable"]) [class*=" expert-datatable"] {
+    box-sizing: border-box;
+}
+
 .vue-expert-datatable {
 	input, div, p, li, span {
 		font-family: 'Roboto', sans-serif;
@@ -43,17 +50,14 @@ $font-size-large: 19px;
         border-collapse: collapse;
         border-spacing: 0;
         width: 100%;
-        display: flex;
         flex-direction: column;
 
         .expert-row {
             padding: 0;
             margin: 0;
-            display: flex;
         }
 
         .expert-datatable-header {
-            display: flex;
             font-size: $font-size-normal;
             font-family: 'Roboto', sans-serif;
             color: rgba(0, 0, 0, .85);
@@ -62,10 +66,17 @@ $font-size-large: 19px;
             background: #fafafa;
             border-bottom: 1px solid #e8e8e8;
             transition: background .3s ease;
+            box-sizing: border-box;
         }
         .expert-datatable-header-column {
-            flex: 1;
 			padding: 4px 11px;
+            position: relative;
+            color: rgba(0, 0, 0, 0.88);
+            font-weight: 600;
+            text-align: start;
+            background: #fafafa;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
         }
 		.icon-editing {
 			font-size: $font-size-normal;
@@ -166,7 +177,6 @@ $font-size-large: 19px;
 		}
 
 		.expert-column {
-            flex: 1;
 			position: relative;
 			font-family: 'Roboto', sans-serif;
 			padding: 4px 11px;

@@ -1,6 +1,6 @@
 <template>
     <div class="vue-expert-datatable" :class="global_class">
-        <div
+        <table
             v-if="initialized"
             v-click-outside="event_blur"
             class="expert-datatable"
@@ -8,55 +8,64 @@
             cellspacing="0"
             rowspacing="0"
         >
-            <div
-                class="expert-row expert-datatable-header"
-                v-bind="bindData && bindData.header ? bindData.header : {}"
-            >
-                <div
+            <colgroup>
+                <col
                     v-for="field in final_fields.filter((x) => x.visible === true)"
-                    :key="`field_${table_identifier}_${field.key}`"
-                    v-bind="
-                        field.bind_data && field.bind_data.custom_header ? field.bind_data.custom_header(field) : {}
-                    "
-                    class="expert-datatable-header-column"
-                    :style="{ flex: field.size }"
+                    :key="`col_${table_identifier}_${field.key}`"
+                    :style="{ width: calculateColumnWidth(field) }"
+                />
+            </colgroup>
+            <thead>
+                <tr
+                    class="expert-row expert-datatable-header"
+                    v-bind="bindData && bindData.header ? bindData.header : {}"
                 >
-                    <slot :name="'header.' + field.key" :header="field">
-                        <span>{{ field.title }}</span>
-                    </slot>
-                </div>
-            </div>
-            <div
-                v-if="$slots['header_row'] || hasScopedSlotStartsWith('header_row.')"
-                class="expert-row header-row"
-                v-bind="bindData && bindData.header_row ? bindData.header_row : {}"
-            >
-                <slot name="header_row">
-                    <div
+                    <th
                         v-for="field in final_fields.filter((x) => x.visible === true)"
-                        :key="`header_row_column_${table_identifier}_${field.key}`"
+                        :key="`field_${table_identifier}_${field.key}`"
                         v-bind="
-                            field.bind_data && field.bind_data.custom_header_row
-                                ? field.bind_data.custom_header_row(field)
-                                : {}
+                            field.bind_data && field.bind_data.custom_header ? field.bind_data.custom_header(field) : {}
                         "
-                        class="expert-column"
-                        :class="expert_column_class(field)"
-                        :style="{ flex: field.size }"
+                        class="expert-datatable-header-column"
                     >
-                        <slot :name="`header_row.${field.key}`" :field="field"> &nbsp; </slot>
-                    </div>
-                </slot>
-            </div>
-            <template v-for="(row, index) in table_data" :key="`record_${table_identifier}_${index}`">
-                <div
+                        <slot :name="'header.' + field.key" :header="field">
+                            {{ field.title }}
+                        </slot>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr
+                    v-if="$slots['header_row'] || hasScopedSlotStartsWith('header_row.')"
+                    class="expert-row header-row"
+                    v-bind="bindData && bindData.header_row ? bindData.header_row : {}"
+                >
+                    <slot name="header_row">
+                        <td
+                            v-for="field in final_fields.filter((x) => x.visible === true)"
+                            :key="`header_row_column_${table_identifier}_${field.key}`"
+                            v-bind="
+                                field.bind_data && field.bind_data.custom_header_row
+                                    ? field.bind_data.custom_header_row(field)
+                                    : {}
+                            "
+                            class="expert-column"
+                            :class="expert_column_class(field)"
+                        >
+                            <slot :name="`header_row.${field.key}`" :field="field"> &nbsp; </slot>
+                        </td>
+                    </slot>
+                </tr>
+                <tr
+                    v-for="(row, index) in table_data"
+                    :key="`record_${table_identifier}_${index}`"
                     class="expert-row"
                     :class="{
                         selected: selected_index === index,
                     }"
                     v-bind="bindData && bindData.row ? bindData.row(row as ItemGenericType, index) : {}"
                 >
-                    <div
+                    <td
                         v-for="field in final_fields.filter((x) => x.visible === true)"
                         :key="`record_${index}_${table_identifier}_${field.key}`"
                         class="expert-column"
@@ -66,7 +75,7 @@
                             selected: is_selected_item(index, field)
                                 && is_editable(field, row as ItemGenericType),
                         }"
-                        :style="{ flex: field.size }"
+                        v-on="event_listener_item(row as ItemGenericType, index, field)"
                     >
                         <VeeForm
                             :ref="'form_edit_item_' + index + '_' + field.key"
@@ -283,152 +292,150 @@
                                 </div>
                             </div>
                         </VeeForm>
-                    </div>
-                </div>
-            </template>
-            <div
-                v-if="$slots['footer_row'] || hasScopedSlotStartsWith('footer_row.')"
-                class="expert-row footer-row"
-                v-bind="bindData && bindData.footer_row ? bindData.footer_row : {}"
-            >
-                <slot name="footer_row">
-                    <div
-                        v-for="field in final_fields.filter((x) => x.visible === true)"
-                        :key="`footer_row_column_${table_identifier}_${field.key}`"
-                        slim
-                        v-bind="
-                            field.bind_data && field.bind_data.custom_header_footer
-                                ? field.bind_data.custom_header_footer(field)
-                                : {}
-                        "
-                        class="expert-column"
-                        :class="expert_column_class(field)"
-                        :style="{ flex: field.size }"
-                    >
-                        <slot :name="`footer_row.${field.key}`" :field="field"> &nbsp; </slot>
-                    </div>
-                </slot>
-            </div>
-            <VeeForm
-                v-if="allowAdding"
-                ref="form_add_item"
-                key="tr_add_1"
-                v-slot="{ handleSubmit }"
-                class="expert-row add-item-row"
-                v-bind="bindData && bindData.add_row ? bindData.add_row : {}"
-            >
-                <VeeField
-                    v-for="field in final_fields.filter((x) => x.visible === true)"
-                    :key="`record_add_${table_identifier}_${field.key}`"
-                    v-slot="{ errors, handleChange }"
-                    :name="field.key"
-                    :rules="prepareRules(field, item_record as ItemGenericType, 'add')"
+                    </td>
+                </tr>
+                <tr
+                    v-if="$slots['footer_row'] || hasScopedSlotStartsWith('footer_row.')"
+                    class="expert-row footer-row"
+                    v-bind="bindData && bindData.footer_row ? bindData.footer_row : {}"
                 >
-                    <div
-                        class="expert-column"
-                        :class="expert_column_class(field, errors, undefined, true)"
-                        v-bind="
-                            field.bind_data && field.bind_data.custom_add_field
-                                ? field.bind_data.custom_add_field(field)
-                                : {}
-                        "
-                        :style="{ flex: field.size }"
-                    >
-                        <div
-                            v-if="field.key !== 'actions'"
-                            :ref="`item_add_${field.key}`"
-                            :key="`expert_item_add_${table_identifier}_${field.key}`"
-                            class="expert-item"
+                    <slot name="footer_row">
+                        <td
+                            v-for="field in final_fields.filter((x) => x.visible === true)"
+                            :key="`footer_row_column_${table_identifier}_${field.key}`"
+                            slim
+                            v-bind="
+                                field.bind_data && field.bind_data.custom_header_footer
+                                    ? field.bind_data.custom_header_footer(field)
+                                    : {}
+                            "
+                            class="expert-column"
+                            :class="expert_column_class(field)"
                         >
-                            <slot
-                                v-if="$slots['add.' + field.key]"
-                                :name="'add.' + field.key"
-                                :events="event_listeners_input(undefined, undefined, field)"
-                                :select-row="event_select_row(undefined, undefined, field)"
-                                :deselect-row="deSelectRow"
-                                :key_down="event_key_down"
-                                :item="item_record"
-                                :value="item_record[field.key]"
-                                :header="field"
-                                :selected="undefined"
-                                :selected_row="undefined"
-                                :adding="true"
-                                :errors="errors"
-                                :validate="handleSubmit"
-                                :index="'adding'"
+                            <slot :name="`footer_row.${field.key}`" :field="field"> &nbsp; </slot>
+                        </td>
+                    </slot>
+                </tr>
+                <VeeForm
+                    v-if="allowAdding"
+                    ref="form_add_item"
+                    key="tr_add_1"
+                    v-slot="{ handleSubmit }"
+                    class="expert-row add-item-row"
+                    v-bind="bindData && bindData.add_row ? bindData.add_row : {}"
+                >
+                    <VeeField
+                        v-for="field in final_fields.filter((x) => x.visible === true)"
+                        :key="`record_add_${table_identifier}_${field.key}`"
+                        v-slot="{ errors, handleChange }"
+                        :name="field.key"
+                        :rules="prepareRules(field, item_record as ItemGenericType, 'add')"
+                    >
+                        <td
+                            class="expert-column"
+                            :class="expert_column_class(field, errors, undefined, true)"
+                            v-bind="
+                                field.bind_data && field.bind_data.custom_add_field
+                                    ? field.bind_data.custom_add_field(field)
+                                    : {}
+                            "
+                        >
+                            <div
+                                v-if="field.key !== 'actions'"
+                                :ref="`item_add_${field.key}`"
+                                :key="`expert_item_add_${table_identifier}_${field.key}`"
+                                class="expert-item"
                             >
-                                <item-field
-                                    v-if="field.editable"
-                                    :ref="`item_field_add_${table_identifier}_${field.key}`"
-                                    :key="`item_field_add_${table_identifier}_${field.key}`"
-                                    :field="(field)"
-                                    :table-name="tableName"
-                                    :model-value="item_record[field.key]"
-                                    :is-adding="true"
-                                    :index="'add'"
-                                    :config="global_config"
-                                    @update:model-value="handleChange"
-                                    v-on="event_listeners_input(undefined, undefined, field)"
-                                    @move-to-other-field="moveToOtherField"
-                                />
-                                <ErrorMessage :name="field.key" />
-                            </slot>
-                            <slot
-                                v-else
-                                :name="'edit.' + field.key"
-                                :events="event_listeners_input(undefined, undefined, field)"
-                                :select-row="event_select_row(undefined, undefined, field)"
-                                :deselect-row="deSelectRow"
-                                :key_down="event_key_down"
-                                :item="item_record"
-                                :value="item_record[field.key]"
-                                :header="field"
-                                :selected="undefined"
-                                :selected_row="undefined"
-                                :adding="true"
-                                :errors="errors"
-                                :validate="handleSubmit"
-                                :index="'adding'"
-                            >
-                                <item-field
-                                    v-if="field.editable"
-                                    :ref="`item_field_add_${table_identifier}_${field.key}`"
-                                    :key="`item_field_add_${table_identifier}_${field.key}`"
-                                    :field="(field)"
-                                    :table-name="tableName"
-                                    :model-value="item_record[field.key]"
-                                    :is-adding="true"
-                                    :index="'add'"
-                                    :config="global_config"
-                                    @update:model-value="handleChange"
-                                    v-on="event_listeners_input(undefined, undefined, field)"
-                                    @move-to-other-field="moveToOtherField"
-                                />
-                                <ErrorMessage :name="field.key" />
-                            </slot>
-                        </div>
-                        <span v-else>
-                            <slot
-                                name="add_buttons"
-                                :item="(item_record as ItemGenericType)"
-                                :header="field"
-                                :index="undefined"
-                                :events="event_listeners_add_button"
-                            >
-                                <button
-                                    v-tooltip="current_language?.add_button_text"
-                                    type="button"
-                                    class="expert-datatable-action-button"
-                                    v-on="event_listeners_add_button()"
+                                <slot
+                                    v-if="$slots['add.' + field.key]"
+                                    :name="'add.' + field.key"
+                                    :events="event_listeners_input(undefined, undefined, field)"
+                                    :select-row="event_select_row(undefined, undefined, field)"
+                                    :deselect-row="deSelectRow"
+                                    :key_down="event_key_down"
+                                    :item="item_record"
+                                    :value="item_record[field.key]"
+                                    :header="field"
+                                    :selected="undefined"
+                                    :selected_row="undefined"
+                                    :adding="true"
+                                    :errors="errors"
+                                    :validate="handleSubmit"
+                                    :index="'adding'"
                                 >
-                                    <font-awesome-icon icon="save" />
-                                </button>
-                            </slot>
-                        </span>
-                    </div>
-                </VeeField>
-            </VeeForm>
-        </div>
+                                    <item-field
+                                        v-if="field.editable"
+                                        :ref="`item_field_add_${table_identifier}_${field.key}`"
+                                        :key="`item_field_add_${table_identifier}_${field.key}`"
+                                        :field="(field)"
+                                        :table-name="tableName"
+                                        :model-value="item_record[field.key]"
+                                        :is-adding="true"
+                                        :index="'add'"
+                                        :config="global_config"
+                                        @update:model-value="handleChange"
+                                        v-on="event_listeners_input(undefined, undefined, field)"
+                                        @move-to-other-field="moveToOtherField"
+                                    />
+                                    <ErrorMessage :name="field.key" />
+                                </slot>
+                                <slot
+                                    v-else
+                                    :name="'edit.' + field.key"
+                                    :events="event_listeners_input(undefined, undefined, field)"
+                                    :select-row="event_select_row(undefined, undefined, field)"
+                                    :deselect-row="deSelectRow"
+                                    :key_down="event_key_down"
+                                    :item="item_record"
+                                    :value="item_record[field.key]"
+                                    :header="field"
+                                    :selected="undefined"
+                                    :selected_row="undefined"
+                                    :adding="true"
+                                    :errors="errors"
+                                    :validate="handleSubmit"
+                                    :index="'adding'"
+                                >
+                                    <item-field
+                                        v-if="field.editable"
+                                        :ref="`item_field_add_${table_identifier}_${field.key}`"
+                                        :key="`item_field_add_${table_identifier}_${field.key}`"
+                                        :field="(field)"
+                                        :table-name="tableName"
+                                        :model-value="item_record[field.key]"
+                                        :is-adding="true"
+                                        :index="'add'"
+                                        :config="global_config"
+                                        @update:model-value="handleChange"
+                                        v-on="event_listeners_input(undefined, undefined, field)"
+                                        @move-to-other-field="moveToOtherField"
+                                    />
+                                    <ErrorMessage :name="field.key" />
+                                </slot>
+                            </div>
+                            <span v-else>
+                                <slot
+                                    name="add_buttons"
+                                    :item="(item_record as ItemGenericType)"
+                                    :header="field"
+                                    :index="undefined"
+                                    :events="event_listeners_add_button"
+                                >
+                                    <button
+                                        v-tooltip="current_language?.add_button_text"
+                                        type="button"
+                                        class="expert-datatable-action-button"
+                                        v-on="event_listeners_add_button()"
+                                    >
+                                        <font-awesome-icon icon="save" />
+                                    </button>
+                                </slot>
+                            </span>
+                        </td>
+                    </VeeField>
+                </VeeForm>
+            </tbody>
+        </table>
     </div>
 </template>
 
@@ -571,7 +578,7 @@ const final_fields = computed<Array<Field<ItemGenericType>>>(() => {
         field.colSpan = field.colSpan ? field.colSpan : 1;
         field.filterIcon = field.filterIcon ? field.filterIcon : 'fas fa-arrow';
         field.sortable = field.sortable !== undefined && field.sortable !== null ? field.sortable : true;
-        field.width = field.width !== undefined && field.width !== null ? field.width : 'auto';
+        field.width = field.width !== undefined && field.width !== null ? field.width : undefined;
         field.visible = field.visible !== undefined && field.visible !== null ? field.visible : true;
         field.editable = field.editable !== undefined && field.editable !== null ? field.editable : true;
         field.fieldType = field.fieldType ? field.fieldType : undefined;
@@ -579,8 +586,7 @@ const final_fields = computed<Array<Field<ItemGenericType>>>(() => {
         field.fieldAlwaysVisible
             = field.fieldAlwaysVisible !== undefined && field.fieldAlwaysVisible !== null
                 ? field.fieldAlwaysVisible
-                : true;
-        field.size = field.size ? field.size : 1;
+                : false;
         fields.push(field);
     }
 
@@ -1575,6 +1581,29 @@ const prepareRules = (
     return schema as unknown as Record<string, unknown>;
 };
 
+const calculateColumnWidth = (field: Field<ItemGenericType>): string => {
+    const fieldWidth = field.width;
+    
+    // If width is specified, use it directly
+    if (fieldWidth !== undefined && fieldWidth !== null) {
+        // If width is a number, treat it as pixels
+        if (typeof fieldWidth === 'number') {
+            return `${fieldWidth}px`;
+        }
+        
+        // If width is a string, assume it's already a valid CSS width value
+        if (typeof fieldWidth === 'string') {
+            return fieldWidth;
+        }
+    }
+    
+    // If no width specified, calculate equal percentage
+    const visibleFields = final_fields.value.filter((x) => x.visible === true);
+    const totalColumns = visibleFields.length;
+    const equalPercentage = 100 / totalColumns;
+    return `${equalPercentage}%`;
+};
+
 // Lifecycle hooks
 onMounted(() => {
     initData();
@@ -1612,7 +1641,6 @@ defineExpose({
     event_listener_item,
     event_select_row,
     show_editing_icon_validate,
-    hasScopedSlot,
     hasScopedSlotStartsWith,
     copyObject,
     cloneObject,
@@ -1621,6 +1649,7 @@ defineExpose({
     is_editable,
     can_delete,
     prepareRules,
+    calculateColumnWidth,
 });
 </script>
 

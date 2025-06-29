@@ -80,6 +80,5 @@ export interface Field<T = BaseEntity> {
     bind_data?: BindData<T>;
     default_value?: unknown;
     name?: string;
-    size?: number;
 }
 export default Field;

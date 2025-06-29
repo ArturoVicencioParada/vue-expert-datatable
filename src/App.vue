@@ -36,7 +36,6 @@ const fields = ref<Field<User>[]>([
         visible: true,
         editable: false,
         pronoun: 'el',
-        size: 0.4,
     },
     {
         title: 'Nombre',
@@ -49,7 +48,6 @@ const fields = ref<Field<User>[]>([
         rules: z.object({
             name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres')
         }),
-        size: 2,
     },
     {
         title: 'Email',
@@ -62,14 +60,13 @@ const fields = ref<Field<User>[]>([
         rules: z.object({
             email: z.string().email('Email inválido').min(1, 'El email es requerido')
         }),
-        size: 1.5,
     },
     {
         title: 'Rol',
         align: 'left',
         key: 'role',
         visible: true,
-        fieldType: 'select',
+        fieldType: 'text',
         editable: true,
         pronoun: 'el',
         selectData: {
@@ -93,7 +90,6 @@ const fields = ref<Field<User>[]>([
         rules: z.object({
             role: z.string().min(1, 'El rol es requerido')
         }),
-        size: 2,
     },
     {
         title: 'Activo',
@@ -103,14 +99,12 @@ const fields = ref<Field<User>[]>([
         fieldType: 'checkbox',
         editable: true,
         pronoun: 'el',
-        size: 0.5,
     },
     {
         title: 'Acciones',
         align: 'center',
         key: 'actions',
         visible: true,
-        size: 0.5,
     },
 ]);
 

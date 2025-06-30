@@ -77,221 +77,30 @@
                         }"
                         v-on="event_listener_item(row as ItemGenericType, index, field)"
                     >
-                        <VeeForm
-                            :ref="'form_edit_item_' + index + '_' + field.key"
-                            v-slot="{ errors, handleSubmit }"
-                        >
-                            <div
-                                :class="expert_column_class(field, errors, index)"
-                                v-bind="
-                                    field.bind_data && field.bind_data.custom_field
-                                        ? field.bind_data.custom_field(row as ItemGenericType, field, index)
-                                        : {}
-                                "
-                            >
-                                <div
-                                    v-if="field.key !== 'actions'"
-                                    :ref="`item_${index}_${field.key}`"
-                                    :key="`expert_item_${index}_${table_identifier}_${field.key}`"
-                                    class="expert-item"
-                                    :class="{
-                                        selectable: field.fieldType !== undefined
-                                            && is_editable(field, row as ItemGenericType),
-                                        selected: is_selected_item(index, field)
-                                            && is_editable(field, row as ItemGenericType),
-                                    }"
-                                >
-                                    <div
-                                        v-show="
-                                            (
-                                                !is_selected_item(index, field)
-                                                || !is_editable(field, row as ItemGenericType)
-                                            ) &&
-                                                !field.fieldAlwaysVisible
-                                        "
-                                        class="expert-row-item"
-                                    >
-                                        <slot
-                                            :name="'item.' + field.key"
-                                            :events="event_listener_item(row as ItemGenericType, index, field)"
-                                            :select-row="event_select_row(row as ItemGenericType, index, field)"
-                                            :deselect-row="deSelectRow"
-                                            :item="row"
-                                            :value="row[field.key as keyof ItemGenericType]"
-                                            :header="field"
-                                            :selected="is_selected_item(index, field)"
-                                            :selected_row="selected_index === index"
-                                            :adding="false"
-                                            :index="index"
-                                            :show="
-                                                (
-                                                    !is_selected_item(index, field)
-                                                    || !is_editable(field, row as ItemGenericType)
-                                                ) &&
-                                                    !field.fieldAlwaysVisible
-                                            "
-                                            :errors="errors"
-                                            :validate="handleSubmit"
-                                        >
-                                            <item-text
-                                                :key="`item_text_${index}_${table_identifier}_${field.key}`"
-                                                :field="field"
-                                                :item="(row as ItemGenericType)"
-                                                v-on="event_listener_item(row as ItemGenericType, index, field)"
-                                            />
-                                        </slot>
-                                    </div>
-                                    <slot
-                                        v-if="
-                                            (is_selected_item(index, field) || field.fieldAlwaysVisible) &&
-                                                is_editable(field, row as ItemGenericType)
-                                        "
-                                        :name="'edit.' + field.key"
-                                        :events="event_listeners_input(row as ItemGenericType, index, field)"
-                                        :select-row="event_select_row(row as ItemGenericType, index, field)"
-                                        :deselect-row="deSelectRow"
-                                        :key_down="event_key_down"
-                                        :item="row"
-                                        :value="row[field.key as keyof ItemGenericType]"
-                                        :header="field"
-                                        :selected="
-                                            selected_index === index &&
-                                                field.key === selected_field?.key &&
-                                                selected_field
-                                        "
-                                        :selected_row="selected_index === index"
-                                        :adding="false"
-                                        :index="index"
-                                        :errors="errors"
-                                        :validate="handleSubmit"
-                                    >
-                                        <template
-                                            v-if="field.fieldType 
-                                                && is_editable(field, row as ItemGenericType)"
-                                        >
-                                            <VeeField
-                                                :name="field.key"
-                                                :rules="prepareRules(field, row as ItemGenericType, index)"
-                                            >
-                                                <item-field
-                                                    :ref="`item_field`"
-                                                    :key="`item_field_${index}_${table_identifier}_${field.key}`"
-                                                    v-model="row[field.key as keyof ItemGenericType]"
-                                                    :field="(field)"
-                                                    :table-name="tableName"
-                                                    :is-adding="false"
-                                                    :index="index"
-                                                    :config="global_config"
-                                                    @blur="event_blur"
-                                                    @keydown="event_key_down"
-                                                    @move-to-other-field="moveToOtherField"
-                                                    v-on="event_listener_item(row as ItemGenericType, index, field)"
-                                                />
-                                                <ErrorMessage :name="field.key" />
-                                            </VeeField>
-                                        </template>
-                                        <template v-else>
-                                            <item-text
-                                                :key="`item_text_${index}_${table_identifier}_${field.key}`"
-                                                :field="field"
-                                                :item="(row as ItemGenericType)"
-                                            />
-                                        </template>
-                                    </slot>
-                                </div>
-
-                                <div v-else>
-                                    <slot
-                                        v-if="$slots['actions.' + row[keyName as keyof ItemGenericType]]"
-                                        :name="'actions.' + row[keyName as keyof ItemGenericType]"
-                                        :item="row"
-                                        :header="field"
-                                        :adding="false"
-                                        :index="index"
-                                    >
-                                        <slot
-                                            name="before_actions_buttons"
-                                            :item="row"
-                                            :header="field"
-                                            :adding="false"
-                                            :index="index"
-                                        />
-                                        <button
-                                            v-if="showEditButton && is_editable(field, row as ItemGenericType)"
-                                            v-tooltip="current_language?.edit_button_text"
-                                            type="button"
-                                            class="expert-datatable-action-button"
-                                            @click="modalEditItem(item_record as ItemGenericType, index)"
-                                        >
-                                            <font-awesome-icon icon="edit" />
-                                        </button>
-                                        <button
-                                            v-if="showDeleteButton && can_delete(field, row as ItemGenericType)"
-                                            v-tooltip="current_language?.delete_button_text"
-                                            type="button"
-                                            class="expert-datatable-action-button"
-                                            @click="
-                                                modalDeleteItem(row[field.key as keyof ItemGenericType] as ItemGenericType, index)
-                                            "
-                                        >
-                                            <font-awesome-icon icon="trash" />
-                                        </button>
-                                        <slot
-                                            name="after_actions_buttons"
-                                            :item="row"
-                                            :header="field"
-                                            :adding="false"
-                                            :index="index"
-                                        />
-                                    </slot>
-                                    <slot
-                                        v-else
-                                        name="actions"
-                                        :item="row"
-                                        :header="field"
-                                        :adding="false"
-                                        :index="index"
-                                        :edit_events="event_listeners_edit_button(row as ItemGenericType, index)"
-                                        :delete_events="
-                                            event_listeners_delete_button(row as ItemGenericType, index)
-                                        "
-                                    >
-                                        <slot
-                                            name="before_actions_buttons"
-                                            :item="row"
-                                            :header="field"
-                                            :adding="false"
-                                            :index="index"
-                                        />
-                                        <button
-                                            v-if="showEditButton && is_editable(field, row as ItemGenericType)"
-                                            v-tooltip="current_language?.edit_button_text"
-                                            type="button"
-                                            class="expert-datatable-action-button"
-                                            v-on="event_listeners_edit_button(row as ItemGenericType, index)"
-                                        >
-                                            <font-awesome-icon icon="edit" />
-                                        </button>
-                                        <button
-                                            v-if="showDeleteButton && can_delete(field, row as ItemGenericType)"
-                                            v-tooltip="current_language?.delete_button_text"
-                                            type="button"
-                                            class="expert-datatable-action-button"
-                                            v-on="event_listeners_delete_button(row as ItemGenericType, index)"
-                                        >
-                                            <font-awesome-icon icon="trash" />
-                                        </button>
-                                        <slot
-                                            name="after_actions_buttons"
-                                            :item="row"
-                                            :header="field"
-                                            :adding="false"
-                                            :index="index"
-                                        />
-                                    </slot>
-                                </div>
-                            </div>
-                        </VeeForm>
+                        <ItemColumnContent
+                            ref="item_field"
+                            v-model:item-record="(item_record as ItemGenericType)"
+                            v-model:selected-row="(selected_row as ItemGenericType)"
+                            v-model:selected-row-before="(selected_row_before as ItemGenericType)"
+                            v-model:item-record-before="(item_record_before as ItemGenericType)"
+                            v-model:is-canceling="is_canceling"
+                            :row="row"
+                            :index="index"
+                            :field="field"
+                            :table-name="tableName"
+                            :table-identifier="table_identifier"
+                            :selected-index="selected_index"
+                            :selected-field="selected_field"
+                            :current-language="current_language"
+                            :key-name="keyName"
+                            :show-edit-button="showEditButton"
+                            :show-delete-button="showDeleteButton"
+                            :item-record-default="(item_record_default as ItemGenericType)"
+                            :adding-row-selected="adding_row_selected"
+                            :save-on-blur="saveOnBlur"
+                            :logging="logging"
+                            @move-to-other-field="moveToOtherField"
+                        />
                     </td>
                 </tr>
                 <tr
@@ -316,124 +125,7 @@
                         </td>
                     </slot>
                 </tr>
-                <VeeForm
-                    v-if="allowAdding"
-                    ref="form_add_item"
-                    key="tr_add_1"
-                    v-slot="{ handleSubmit }"
-                    class="expert-row add-item-row"
-                    v-bind="bindData && bindData.add_row ? bindData.add_row : {}"
-                >
-                    <VeeField
-                        v-for="field in final_fields.filter((x) => x.visible === true)"
-                        :key="`record_add_${table_identifier}_${field.key}`"
-                        v-slot="{ errors, handleChange }"
-                        :name="field.key"
-                        :rules="prepareRules(field, item_record as ItemGenericType, 'add')"
-                    >
-                        <td
-                            class="expert-column"
-                            :class="expert_column_class(field, errors, undefined, true)"
-                            v-bind="
-                                field.bind_data && field.bind_data.custom_add_field
-                                    ? field.bind_data.custom_add_field(field)
-                                    : {}
-                            "
-                        >
-                            <div
-                                v-if="field.key !== 'actions'"
-                                :ref="`item_add_${field.key}`"
-                                :key="`expert_item_add_${table_identifier}_${field.key}`"
-                                class="expert-item"
-                            >
-                                <slot
-                                    v-if="$slots['add.' + field.key]"
-                                    :name="'add.' + field.key"
-                                    :events="event_listeners_input(undefined, undefined, field)"
-                                    :select-row="event_select_row(undefined, undefined, field)"
-                                    :deselect-row="deSelectRow"
-                                    :key_down="event_key_down"
-                                    :item="item_record"
-                                    :value="item_record[field.key]"
-                                    :header="field"
-                                    :selected="undefined"
-                                    :selected_row="undefined"
-                                    :adding="true"
-                                    :errors="errors"
-                                    :validate="handleSubmit"
-                                    :index="'adding'"
-                                >
-                                    <item-field
-                                        v-if="field.editable"
-                                        :ref="`item_field_add_${table_identifier}_${field.key}`"
-                                        :key="`item_field_add_${table_identifier}_${field.key}`"
-                                        :field="(field)"
-                                        :table-name="tableName"
-                                        :model-value="item_record[field.key]"
-                                        :is-adding="true"
-                                        :index="'add'"
-                                        :config="global_config"
-                                        @update:model-value="handleChange"
-                                        v-on="event_listeners_input(undefined, undefined, field)"
-                                        @move-to-other-field="moveToOtherField"
-                                    />
-                                    <ErrorMessage :name="field.key" />
-                                </slot>
-                                <slot
-                                    v-else
-                                    :name="'edit.' + field.key"
-                                    :events="event_listeners_input(undefined, undefined, field)"
-                                    :select-row="event_select_row(undefined, undefined, field)"
-                                    :deselect-row="deSelectRow"
-                                    :key_down="event_key_down"
-                                    :item="item_record"
-                                    :value="item_record[field.key]"
-                                    :header="field"
-                                    :selected="undefined"
-                                    :selected_row="undefined"
-                                    :adding="true"
-                                    :errors="errors"
-                                    :validate="handleSubmit"
-                                    :index="'adding'"
-                                >
-                                    <item-field
-                                        v-if="field.editable"
-                                        :ref="`item_field_add_${table_identifier}_${field.key}`"
-                                        :key="`item_field_add_${table_identifier}_${field.key}`"
-                                        :field="(field)"
-                                        :table-name="tableName"
-                                        :model-value="item_record[field.key]"
-                                        :is-adding="true"
-                                        :index="'add'"
-                                        :config="global_config"
-                                        @update:model-value="handleChange"
-                                        v-on="event_listeners_input(undefined, undefined, field)"
-                                        @move-to-other-field="moveToOtherField"
-                                    />
-                                    <ErrorMessage :name="field.key" />
-                                </slot>
-                            </div>
-                            <span v-else>
-                                <slot
-                                    name="add_buttons"
-                                    :item="(item_record as ItemGenericType)"
-                                    :header="field"
-                                    :index="undefined"
-                                    :events="event_listeners_add_button"
-                                >
-                                    <button
-                                        v-tooltip="current_language?.add_button_text"
-                                        type="button"
-                                        class="expert-datatable-action-button"
-                                        v-on="event_listeners_add_button()"
-                                    >
-                                        <font-awesome-icon icon="save" />
-                                    </button>
-                                </slot>
-                            </span>
-                        </td>
-                    </VeeField>
-                </VeeForm>
+                <!-- TODO: Add item-column-content  -->
             </tbody>
         </table>
     </div>
@@ -447,18 +139,16 @@ import MethodInterface from './application/interface/method';
 import AlertInterface from './application/interface/alert';
 import CustomEvents from './application/interface/custom_events';
 import BindDataProp from './application/interface/bind_data_prop';
-import ItemField from './application/components/item-field/item-field.vue';
 import initLanguage from './application/language/init-language';
-import ItemText from './application/components/item-text/item_text.vue';
 import Exception from './application/utils/exception';
 import clone from 'just-clone';
 import dayjs from 'dayjs';
 import Language from './application/interface/language';
 import Configuration from './application/interface/configuration';
 import { HttpClient } from './application/interface/http_client_interface';
-import { Form as VeeForm, Field as VeeField, ErrorMessage } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
+import ItemColumnContent from './application/components/inputs/item-column-content/item-column-content.vue';
 
 interface ExpertDatatableProps<T = BaseEntity> {
     tableName: string;
@@ -586,7 +276,7 @@ const final_fields = computed<Array<Field<ItemGenericType>>>(() => {
         field.fieldAlwaysVisible
             = field.fieldAlwaysVisible !== undefined && field.fieldAlwaysVisible !== null
                 ? field.fieldAlwaysVisible
-                : false;
+                : true;
         fields.push(field);
     }
 
@@ -783,119 +473,25 @@ const getTableData = () => {
 };
 
 const saveTableData = async (is_adding = false) => {
-    return new Promise((resolve) => {
-        try {
-            if (is_canceling.value) {
-                return resolve(undefined);
-            }
-            const formName = is_adding
-                ? 'form_add_item'
-                : `form_edit_item_${selected_index.value}_${selected_field.value?.key}`;
-            if (props.logging) console.info('formName', formName);
-            let form = ref<unknown>(formName);
-            if (form.value) {
-                const validate = true;
-                if (props.logging) console.info('validate', validate);
-                if (validate) {
-                    if (is_adding) {
-                        if (isWithApi.value) {
-                            if (add_method.value) {
-                                loading_data.value = true;
-                                const item_record_copy = clone(item_record.value);
-                                if (props.customEvents.before_add && selected_field.value?.key) {
-                                    Promise.resolve(
-                                        props.customEvents.before_add(
-                                            item_record_copy,
-                                            selected_index.value,
-                                            selected_field.value
-                                        )
-                                    ).then((cont) => {
-                                        if (!cont) {
-                                            return false;
-                                        }
-                                        if (props.customEvents.before_save && selected_field.value?.key) {
-                                            return Promise.resolve(
-                                                props.customEvents.before_save(
-                                                    item_record_copy,
-                                                    selected_index.value,
-                                                    selected_field.value
-                                                )
-                                            );
-                                        }
-                                        return true;
-                                    }).then((cont) => {
-                                        if (!cont) {
-                                            return false;
-                                        }
-                                        const http_method = getHttpByMethod<ItemGenericType>(
-                                            add_method.value || {
-                                                url: '/',
-                                                type: 'POST',
-                                            },
-                                            item_record_copy
-                                        );
-                                        if (http_method) {
-                                            http_method.then((response) => {
-                                                if (
-                                                    response.data['update_table' as keyof ItemGenericType]
-                                                    || response.data[props.itemName as keyof ItemGenericType] === undefined
-                                                ) {
-                                                    getTableData();
-                                                } else {
-                                                    const item = response.data;
-                                                    table_data.value.push(item);
-                                                    emit('updated-data', table_data.value);
-                                                    emit('inserted-item', item);
-                                                }
-                                                if (props.customEvents.after_add && selected_field.value?.key) {
-                                                    return Promise.resolve(
-                                                        props.customEvents.after_add(
-                                                            item_record_copy,
-                                                            selected_index.value,
-                                                            selected_field.value
-                                                        )
-                                                    );
-                                                }
-                                                return true;
-                                            }).then((cont) => {
-                                                if (!cont) {
-                                                    return false;
-                                                }
-                                                if (props.customEvents.after_save && selected_field.value?.key) {
-                                                    return Promise.resolve(
-                                                        props.customEvents.after_save(
-                                                            item_record_copy,
-                                                            selected_index.value,
-                                                            selected_field.value
-                                                        )
-                                                    );
-                                                }
-                                                return true;
-                                            }).then((cont) => {
-                                                if (!cont) {
-                                                    return false;
-                                                }
-                                                copyObject(item_record.value, item_record_default.value);
-                                                copyObject(item_record_before.value, item_record_default.value);
-                                                deSelectRow().then(() => {
-                                                    resolve(item_record_copy);
-                                                });
-                                            }).catch((error) => {
-                                                copyObject(item_record.value, item_record_default.value);
-                                                emit('error', error);
-                                                throw new Exception(error.message, 1);
-                                            });
-                                        }
-                                    }).catch((error) => {
-                                        throw new Exception(error.message, error.code);
-                                    });
-                                }
-                            } else {
-                                throw new Exception('you haven\'t provided an add method');
-                            }
-                        } else {
+    try {
+        if (is_canceling.value) {
+            return Promise.resolve(undefined);
+        }
+        const formName = is_adding
+            ? 'form_add_item'
+            : `form_edit_item_${selected_index.value}_${selected_field.value?.key}`;
+        if (props.logging) console.info('formName', formName);
+        let form = ref<unknown>(formName);
+        if (form.value) {
+            const validate = true;
+            if (props.logging) console.info('validate', validate);
+            if (validate) {
+                if (is_adding) {
+                    if (isWithApi.value) {
+                        if (add_method.value) {
+                            loading_data.value = true;
                             const item_record_copy = clone(item_record.value);
-                            if (props.customEvents.before_add) {
+                            if (props.customEvents.before_add && selected_field.value?.key) {
                                 Promise.resolve(
                                     props.customEvents.before_add(
                                         item_record_copy,
@@ -906,7 +502,7 @@ const saveTableData = async (is_adding = false) => {
                                     if (!cont) {
                                         return false;
                                     }
-                                    if (props.customEvents.before_save) {
+                                    if (props.customEvents.before_save && selected_field.value?.key) {
                                         return Promise.resolve(
                                             props.customEvents.before_save(
                                                 item_record_copy,
@@ -920,132 +516,146 @@ const saveTableData = async (is_adding = false) => {
                                     if (!cont) {
                                         return false;
                                     }
-                                    table_data.value.push(item_record_copy);
-                                    copyObject(item_record.value, item_record_default.value);
-                                    copyObject(item_record_before.value, item_record_default.value);
-                                    nextTick(() => {
-                                        if (props.customEvents.after_add) {
-                                            return Promise.resolve(
-                                                props.customEvents.after_add(
-                                                    item_record_copy,
-                                                    selected_index.value,
-                                                    selected_field.value
-                                                )
-                                            );
-                                        }
-                                        return true;
-                                    }).then((cont) => {
-                                        if (!cont) {
-                                            return false;
-                                        }
-                                        if (props.customEvents.after_save) {
-                                            return Promise.resolve(
-                                                props.customEvents.after_save(
-                                                    item_record_copy,
-                                                    selected_index.value,
-                                                    selected_field.value
-                                                )
-                                            );
-                                        }
-                                        return true;
-                                    }).then((cont) => {
-                                        if (!cont) {
-                                            return false;
-                                        }
-                                        emit('updated-data', table_data.value);
-                                        emit('added-item', item_record_copy);
-                                        deSelectRow().then(() => {
-                                            resolve(item_record.value);
+                                    const http_method = getHttpByMethod<ItemGenericType>(
+                                        add_method.value || {
+                                            url: '/',
+                                            type: 'POST',
+                                        },
+                                        item_record_copy
+                                    );
+                                    if (http_method) {
+                                        http_method.then((response) => {
+                                            if (
+                                                response.data['update_table' as keyof ItemGenericType]
+                                                || response.data[props.itemName as keyof ItemGenericType] === undefined
+                                            ) {
+                                                getTableData();
+                                            } else {
+                                                const item = response.data;
+                                                table_data.value.push(item);
+                                                emit('updated-data', table_data.value);
+                                                emit('inserted-item', item);
+                                            }
+                                            if (props.customEvents.after_add && selected_field.value?.key) {
+                                                return Promise.resolve(
+                                                    props.customEvents.after_add(
+                                                        item_record_copy,
+                                                        selected_index.value,
+                                                        selected_field.value
+                                                    )
+                                                );
+                                            }
+                                            return true;
+                                        }).then((cont) => {
+                                            if (!cont) {
+                                                return false;
+                                            }
+                                            if (props.customEvents.after_save && selected_field.value?.key) {
+                                                return Promise.resolve(
+                                                    props.customEvents.after_save(
+                                                        item_record_copy,
+                                                        selected_index.value,
+                                                        selected_field.value
+                                                    )
+                                                );
+                                            }
+                                            return true;
+                                        }).then((cont) => {
+                                            if (!cont) {
+                                                return false;
+                                            }
+                                            copyObject(item_record.value, item_record_default.value);
+                                            copyObject(item_record_before.value, item_record_default.value);
+                                            deSelectRow().then(() => {
+                                                Promise.resolve(item_record_copy);
+                                            });
+                                        }).catch((error) => {
+                                            copyObject(item_record.value, item_record_default.value);
+                                            emit('error', error);
+                                            throw new Exception(error.message, 1);
                                         });
-                                    });
+                                    }
                                 }).catch((error) => {
                                     throw new Exception(error.message, error.code);
                                 });
                             }
+                        } else {
+                            throw new Exception('you haven\'t provided an add method');
                         }
                     } else {
-                        if (isWithApi.value) {
-                            if (update_method.value) {
-                                loading_data.value = true;
-                                const selected_row_copy = clone(selected_row.value);
-                                if (props.customEvents.before_edit) {
-                                    Promise.resolve(
-                                        props.customEvents.before_edit(
-                                            selected_row_copy,
+                        const item_record_copy = clone(item_record.value);
+                        if (props.customEvents.before_add) {
+                            Promise.resolve(
+                                props.customEvents.before_add(
+                                    item_record_copy,
+                                    selected_index.value,
+                                    selected_field.value
+                                )
+                            ).then((cont) => {
+                                if (!cont) {
+                                    return false;
+                                }
+                                if (props.customEvents.before_save) {
+                                    return Promise.resolve(
+                                        props.customEvents.before_save(
+                                            item_record_copy,
                                             selected_index.value,
                                             selected_field.value
                                         )
-                                    ).then((cont) => {
-                                        if (!cont) {
-                                            return false;
-                                        }
-                                        if (props.customEvents.before_save) {
-                                            return Promise.resolve(
-                                                props.customEvents.before_save(
-                                                    selected_row_copy,
-                                                    selected_index.value,
-                                                    selected_field.value
-                                                )
-                                            );
-                                        }
-                                        return true;
-                                    }).then((cont) => {
-                                        if (!cont) {
-                                            return false;
-                                        }
-                                        const http_method = getHttpByMethod<ItemGenericType>(
-                                            update_method.value || {
-                                                url: '/',
-                                                type: 'PUT',
-                                            },
-                                            selected_row_copy
-                                        );
-                                        if (http_method) {
-                                            http_method.then((response) => {
-                                                if (
-                                                    response.data['update_table' as keyof ItemGenericType]
-                                                    || response.data[props.itemName as keyof ItemGenericType] === undefined
-                                                ) {
-                                                    getTableData();
-                                                } else {
-                                                    emit('updated-data', table_data.value);
-                                                }
-                                                if (props.customEvents.after_edit) {
-                                                    return Promise.resolve(
-                                                        props.customEvents.after_edit(
-                                                            selected_row_copy,
-                                                            selected_index.value,
-                                                            selected_field.value
-                                                        )
-                                                    );
-                                                }
-                                                if (props.customEvents.after_save) {
-                                                    return Promise.resolve(
-                                                        props.customEvents.after_save(
-                                                            selected_row_copy,
-                                                            selected_index.value,
-                                                            selected_field.value
-                                                        )
-                                                    );
-                                                }
-                                                emit('updated-item', response.data[props.itemName as keyof ItemGenericType]);
-                                                selected_row_before.value = cloneObject(item_record_default.value);
-                                                deSelectRow().then(() => {
-                                                    resolve(response.data[props.itemName as keyof ItemGenericType]);
-                                                });
-                                            }).catch((error) => {
-                                                throw new Exception(error.message, 1);
-                                            });
-                                        }
-                                    }).catch((error) => {
-                                        throw new Exception(error.message, error.code);
-                                    });
+                                    );
                                 }
-                            } else {
-                                throw new Exception('you haven\'t provided an update method');
-                            }
-                        } else {
-                            if (props.logging) console.info('EDIT', clone(selected_row.value));
+                                return true;
+                            }).then((cont) => {
+                                if (!cont) {
+                                    return false;
+                                }
+                                table_data.value.push(item_record_copy);
+                                copyObject(item_record.value, item_record_default.value);
+                                copyObject(item_record_before.value, item_record_default.value);
+                                nextTick(() => {
+                                    if (props.customEvents.after_add) {
+                                        return Promise.resolve(
+                                            props.customEvents.after_add(
+                                                item_record_copy,
+                                                selected_index.value,
+                                                selected_field.value
+                                            )
+                                        );
+                                    }
+                                    return true;
+                                }).then((cont) => {
+                                    if (!cont) {
+                                        return false;
+                                    }
+                                    if (props.customEvents.after_save) {
+                                        return Promise.resolve(
+                                            props.customEvents.after_save(
+                                                item_record_copy,
+                                                selected_index.value,
+                                                selected_field.value
+                                            )
+                                        );
+                                    }
+                                    return true;
+                                }).then((cont) => {
+                                    if (!cont) {
+                                        return false;
+                                    }
+                                    emit('updated-data', table_data.value);
+                                    emit('added-item', item_record_copy);
+                                    deSelectRow().then(() => {
+                                        Promise.resolve(item_record.value);
+                                    });
+                                });
+                            }).catch((error) => {
+                                throw new Exception(error.message, error.code);
+                            });
+                        }
+                    }
+                } else {
+                    if (isWithApi.value) {
+                        if (update_method.value) {
+                            loading_data.value = true;
                             const selected_row_copy = clone(selected_row.value);
                             if (props.customEvents.before_edit) {
                                 Promise.resolve(
@@ -1072,73 +682,151 @@ const saveTableData = async (is_adding = false) => {
                                     if (!cont) {
                                         return false;
                                     }
-                                    emit('updated-data', table_data.value);
-                                    emit('updated-item', selected_row_copy);
-
-                                    selected_row_before.value = cloneObject(selected_row.value);
-
-                                    if (props.customEvents.after_edit) {
-                                        return Promise.resolve(
-                                            props.customEvents.after_edit(
-                                                selected_row_copy,
-                                                selected_index.value,
-                                                selected_field.value
-                                            )
-                                        );
+                                    const http_method = getHttpByMethod<ItemGenericType>(
+                                        update_method.value || {
+                                            url: '/',
+                                            type: 'PUT',
+                                        },
+                                        selected_row_copy
+                                    );
+                                    if (http_method) {
+                                        http_method.then((response) => {
+                                            if (
+                                                response.data['update_table' as keyof ItemGenericType]
+                                                || response.data[props.itemName as keyof ItemGenericType] === undefined
+                                            ) {
+                                                getTableData();
+                                            } else {
+                                                emit('updated-data', table_data.value);
+                                            }
+                                            if (props.customEvents.after_edit) {
+                                                return Promise.resolve(
+                                                    props.customEvents.after_edit(
+                                                        selected_row_copy,
+                                                        selected_index.value,
+                                                        selected_field.value
+                                                    )
+                                                );
+                                            }
+                                            if (props.customEvents.after_save) {
+                                                return Promise.resolve(
+                                                    props.customEvents.after_save(
+                                                        selected_row_copy,
+                                                        selected_index.value,
+                                                        selected_field.value
+                                                    )
+                                                );
+                                            }
+                                            emit('updated-item', response.data[props.itemName as keyof ItemGenericType]);
+                                            selected_row_before.value = cloneObject(item_record_default.value);
+                                            deSelectRow().then(() => {
+                                                Promise.resolve(response.data[props.itemName as keyof ItemGenericType]);
+                                            });
+                                        }).catch((error) => {
+                                            throw new Exception(error.message, 1);
+                                        });
                                     }
-                                    return true;
-                                }).then((cont) => {
-                                    if (!cont) {
-                                        return false;
-                                    }
-                                    if (props.customEvents.after_save) {
-                                        return Promise.resolve(
-                                            props.customEvents.after_save(
-                                                selected_row_copy,
-                                                selected_index.value,
-                                                selected_field.value
-                                            )
-                                        );
-                                    }
-                                    return true;
-                                }).then((cont) => {
-                                    if (!cont) {
-                                        return false;
-                                    }
-                                    deSelectRow().then(() => {
-                                        resolve(selected_row_copy);
-                                    });
                                 }).catch((error) => {
                                     throw new Exception(error.message, error.code);
                                 });
                             }
+                        } else {
+                            throw new Exception('you haven\'t provided an update method');
+                        }
+                    } else {
+                        if (props.logging) console.info('EDIT', clone(selected_row.value));
+                        const selected_row_copy = clone(selected_row.value);
+                        if (props.customEvents.before_edit) {
+                            Promise.resolve(
+                                props.customEvents.before_edit(
+                                    selected_row_copy,
+                                    selected_index.value,
+                                    selected_field.value
+                                )
+                            ).then((cont) => {
+                                if (!cont) {
+                                    return false;
+                                }
+                                if (props.customEvents.before_save) {
+                                    return Promise.resolve(
+                                        props.customEvents.before_save(
+                                            selected_row_copy,
+                                            selected_index.value,
+                                            selected_field.value
+                                        )
+                                    );
+                                }
+                                return true;
+                            }).then((cont) => {
+                                if (!cont) {
+                                    return false;
+                                }
+                                emit('updated-data', table_data.value);
+                                emit('updated-item', selected_row_copy);
+
+                                selected_row_before.value = cloneObject(selected_row.value);
+
+                                if (props.customEvents.after_edit) {
+                                    return Promise.resolve(
+                                        props.customEvents.after_edit(
+                                            selected_row_copy,
+                                            selected_index.value,
+                                            selected_field.value
+                                        )
+                                    );
+                                }
+                                return true;
+                            }).then((cont) => {
+                                if (!cont) {
+                                    return false;
+                                }
+                                if (props.customEvents.after_save) {
+                                    return Promise.resolve(
+                                        props.customEvents.after_save(
+                                            selected_row_copy,
+                                            selected_index.value,
+                                            selected_field.value
+                                        )
+                                    );
+                                }
+                                return true;
+                            }).then((cont) => {
+                                if (!cont) {
+                                    return false;
+                                }
+                                deSelectRow().then(() => {
+                                    Promise.resolve(selected_row_copy);
+                                });
+                            }).catch((error) => {
+                                throw new Exception(error.message, error.code);
+                            });
                         }
                     }
-                } else {
-                    let error_message = current_language.value?.fill_required_fields || '';
-                    if (props.logging) console.info('is_adding', is_adding);
-                    if (!is_adding) {
-                        cancel_editing();
-                    }
-                    throw new Exception(error_message, 10);
                 }
-            }
-        } catch (error) {
-            if (error instanceof Exception) {
-                if (props.logging) console.info('ERROR', error.message, error.stack);
-                showAlert({
-                    type: 'error',
-                    message: error.message,
-                    code: error.code,
-                });
-                if (error.code === undefined) {
-                    console.error('Unknown Vue Expert Table Error:', error.message, error.stack);
+            } else {
+                let error_message = current_language.value?.fill_required_fields || '';
+                if (props.logging) console.info('is_adding', is_adding);
+                if (!is_adding) {
+                    cancel_editing();
                 }
+                throw new Exception(error_message, 10);
             }
-            cancel_editing();
-            resolve(undefined);
         }
-    });
+    } catch (error) {
+        if (error instanceof Exception) {
+            if (props.logging) console.info('ERROR', error.message, error.stack);
+            showAlert({
+                type: 'error',
+                message: error.message,
+                code: error.code,
+            });
+            if (error.code === undefined) {
+                console.error('Unknown Vue Expert Table Error:', error.message, error.stack);
+            }
+        }
+        cancel_editing();
+        Promise.resolve(undefined);
+    }
 };
 
 const modalEditItem = (item_record: ItemGenericType, index: number) => {
@@ -1183,7 +871,6 @@ const selectRow = (
     index: number | undefined = undefined,
     field: Field<ItemGenericType>
 ) => {
-    // console.log('selectRow', row, index, field);
     if (!row) {
         return;
     }
@@ -1208,13 +895,11 @@ const moveToOtherField = (direction: 'left' | 'right' | 'up' | 'down') => {
         const selected_field_index = editable_fields.findIndex((field) => field.key === selected_field.value?.key);
         if (direction === 'left') {
             if (selected_field_index > 0) {
-                // console.log('moveToOtherField left', selected_field_index, editable_fields[selected_field_index - 1]);
                 selectRow(selected_row.value, index, editable_fields[selected_field_index - 1]);
             }
         }
         if (direction === 'right') {
             if (selected_field_index < props.fields.length - 1) {
-                // console.log('moveToOtherField right', selected_field_index, editable_fields[selected_field_index + 1]);
                 selectRow(selected_row.value, index, editable_fields[selected_field_index + 1]);
             }
         }
@@ -1226,14 +911,12 @@ const moveToOtherField = (direction: 'left' | 'right' | 'up' | 'down') => {
 
         if (direction === 'up') {
             if (selected_row_index > 0 && selected_field.value) {
-                // console.log('moveToOtherField up', selected_row_index, selected_field.value);
                 selectRow(editable_rows[selected_row_index - 1], index - 1, selected_field.value);
             }
         }
         if (direction === 'down' && selected_field.value) {
             const editable_rows = table_data.value.filter((row) => selected_field.value && is_editable(selected_field.value, row));
             if (selected_row_index < table_data.value.length - 1) {
-                // console.log('moveToOtherField down', selected_row_index, selected_field.value);
                 selectRow(editable_rows[selected_row_index + 1], index + 1, selected_field.value);
             }
         }
@@ -1272,9 +955,9 @@ const dynamicRefs = useTemplateRef<ItemFieldRef[]>('item_field');
 const focusSelectedInput = (field: Field<ItemGenericType>, index: number | undefined = undefined) => {
     nextTick(() => {
         if (field && (index || index === 0)) {
+            console.log('dynamicRefs', dynamicRefs.value?.[0])
             if (dynamicRefs) {
                 const element = dynamicRefs.value?.find((ref) => ref.field.key === field.key && ref.index === index);
-                // console.log('focusSelectedInput test', element, index);
                 element?.focus();
             }
         }
@@ -1320,27 +1003,6 @@ const cancel_editing = async () => {
     }
 };
 
-const event_input = (e: unknown) => {
-    if (props.logging) console.info('EVENT INPUT VED', e);
-    if (selected_field.value?.key) {
-        if (props.logging) console.info('EVENT INPUT VED', e);
-        const name = selected_field.value.key;
-        const is_adding = selected_index.value === undefined;
-        if (name) {
-            let inputValue = '';
-            inputValue = e as string;
-            if (props.logging) console.info('inputValue', inputValue);
-            if (selected_row.value && !is_adding) {
-                selected_row.value[name] = inputValue;
-            } else if (is_adding && item_record.value && adding_row_selected.value) {
-                item_record.value[name] = inputValue;
-            }
-        } else {
-            console.error('input does not have name attribute');
-        }
-    }
-};
-
 const event_blur = async () => {
     if (selected_row.value || adding_row_selected.value) {
         if (!adding_row_selected.value && !is_canceling.value) {
@@ -1353,21 +1015,6 @@ const event_blur = async () => {
         await deSelectRow();
     }
     is_canceling.value = false;
-};
-
-const event_key_down = (e: KeyboardEvent) => {
-    if (e.keyCode === 13 || e.which === 13 || e.key === 'Enter') {
-        saveTableData(adding_row_selected.value);
-    }
-    if (e.keyCode === 27 || e.which === 27 || e.key === 'Escape' || e.key === 'Esc') {
-        cancel_editing();
-    }
-};
-
-const event_focus = (row: ItemGenericType, index: number | undefined = undefined, field: Field<ItemGenericType>) => {
-    if (!row && !index) {
-        selectRow(row, index, field);
-    }
 };
 
 const is_selected_item = (index: number | undefined, field: Field<ItemGenericType>) => {
@@ -1426,25 +1073,6 @@ const resetForm = () => {
     // }
 };
 
-const event_listeners_input = (
-    row: ItemGenericType | undefined = undefined,
-    index: number | undefined = undefined,
-    field: Field<ItemGenericType>
-) => {
-    if (!row) {
-        return undefined;
-    }
-    return {
-        onBlur: () => event_blur(),
-        onFocus: () => event_focus(row, index, field),
-        onInput: (e: unknown) => event_input(e),
-        onChange: (e: unknown) => event_input(e),
-        onKeydown: (e: KeyboardEvent) => event_key_down(e),
-        'onUpdate:modelValue': (value: unknown) => event_input(value),
-        deselectRow: () => deSelectRow(),
-    };
-};
-
 const event_listeners_add_button = () => {
     return {
         click: () => saveTableData(true),
@@ -1495,11 +1123,6 @@ const show_editing_icon_validate = (
         }
     }
     return false;
-};
-
-const hasScopedSlot = (name: string) => {
-    const keys = Object.keys(slots);
-    return keys.includes(name);
 };
 
 const hasScopedSlotStartsWith = (name: string) => {
@@ -1626,15 +1249,11 @@ defineExpose({
     focusSelectedInput,
     is_selected_row,
     cancel_editing,
-    event_input,
     event_blur,
-    event_key_down,
-    event_focus,
     is_selected_item,
     showAlert,
     expert_column_class,
     resetForm,
-    event_listeners_input,
     event_listeners_add_button,
     event_listeners_edit_button,
     event_listeners_delete_button,

@@ -121,10 +121,10 @@ const inputPlaceholder = (field: Field<ItemGenericType>): string => {
     return text;
 };
 
-const handleSubmit = (e: Event) => {
-    e.preventDefault();
-    eventBlur();
-};
+// const handleSubmit = (e: Event) => {
+//     e.preventDefault();
+//     eventBlur();
+// };
 
 const eventFocus = () => {
     emit('focus');

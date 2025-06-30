@@ -8,6 +8,7 @@
             :data="tableData"
             :key-name="'id'"
             :item="defaultItem"
+            :logging="true"
         />
     </div>
 </template>
@@ -66,7 +67,7 @@ const fields = ref<Field<User>[]>([
         align: 'left',
         key: 'role',
         visible: true,
-        fieldType: 'text',
+        fieldType: 'select',
         editable: true,
         pronoun: 'el',
         selectData: {

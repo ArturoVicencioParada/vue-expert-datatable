@@ -45,6 +45,7 @@
                         v-for="(item, index) in filteredItems"
                         :key="getItemKey(item, index)"
                         class="expert-datatable-select-item"
+                        :class="{ 'selected-item': isSelectedItem(item) }"
                         @click="handleItemClick(item)"
                     >
                         <slot name="item-list" :item="item">
@@ -106,7 +107,7 @@ const mainDiv = ref<HTMLElement | null>(null)
 const searchInput = ref<HTMLInputElement | null>(null)
 const isOpen = ref(false)
 const searchText = ref('')
-const selectedItem = ref<ItemGenericType | undefined>(undefined)
+const selectedItem = ref<SelectOptionType | undefined>(undefined)
 
 // Computed
 const selectData = computed<SelectData<SelectOptionType>>(() => {
@@ -131,7 +132,7 @@ const selectData = computed<SelectData<SelectOptionType>>(() => {
 const filteredItems = computed<SelectOptionType[]>(() => {
     if (!selectData.value.items) return []
 
-    if (!searchText.value) return selectData.value.items
+    if (!searchText.value || !!selectedItem.value) return selectData.value.items
 
     return selectData.value.items.filter((item) => {
         if (selectData.value.itemText && selectData.value.itemValue) {
@@ -152,6 +153,13 @@ const filteredItems = computed<SelectOptionType[]>(() => {
     })
 })
 
+const isSelectedItem = (item: SelectOptionType) => {
+    if (!selectedItem.value) {
+        return false;
+    }
+    return selectedItem.value.value === item.value
+}
+
 // Methods
 const getItemKey = (item: SelectOptionType, index: number): string => {
     if (selectData.value.itemValue) {
@@ -163,14 +171,12 @@ const getItemKey = (item: SelectOptionType, index: number): string => {
 const handleItemClick = (item: SelectOptionType) => {
     selectedItem.value = item
     const value = selectData.value.itemValue ? item[selectData.value.itemValue as keyof SelectOptionType] : item
-    console.log('handleItemClick', item, value)
     emit('update:modelValue', value as string | number | object | undefined)
     emit('change', value as string | number | object | undefined)
     emit('selected-item', item)
 	
     nextTick(() => {
         isOpen.value = false
-        searchText.value = ''
     })
 }
 
@@ -350,6 +356,10 @@ defineExpose({
 				&:hover {
 					background-color: #f2f2f2;
 				}
+
+                &.selected-item {
+                    background-color: #f2f2f2;
+                }
 			}
 		}
 	}
